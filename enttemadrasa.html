@@ -4,36 +4,132 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>എന്റെ മദ്റസ | Misbahul Uloom</title>
+    
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
     <style>
         :root { --primary: #004d00; --bg: #f4f7f6; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 15px; }
-        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        .btn:disabled { background: #888; }
-        .page { display: none; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 0; }
+        
+        /* മൊബൈൽ ഫ്രണ്ട്ലി കണ്ടെയ്നർ */
+        .container { 
+            width: 100%; 
+            max-width: 500px; 
+            background: white; 
+            min-height: 100vh; 
+            margin: auto; 
+            position: relative; 
+            padding: 20px; 
+            box-sizing: border-box; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* രഹസ്യ പ്ലസ് ബട്ടൺ (രജിസ്ട്രേഷനായി) */
+        .secret-trigger { 
+            position: absolute; 
+            top: 10px; 
+            right: 10px; 
+            width: 30px; 
+            height: 30px; 
+            color: #eee; /* വളരെ ലൈറ്റ് നിറം - പെട്ടെന്ന് ശ്രദ്ധയിൽ പെടില്ല */
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            z-index: 100;
+        }
+
+        .page { display: none; width: 100%; }
         .active { display: block; }
+
+        h1, h2 { color: var(--primary); text-align: center; margin-bottom: 25px; }
+        
+        .input-group { margin-bottom: 15px; }
+        input { 
+            width: 100%; 
+            padding: 14px; 
+            border: 1.5px solid #eee; 
+            border-radius: 10px; 
+            box-sizing: border-box; 
+            font-size: 16px; 
+            outline: none; 
+            transition: 0.3s;
+        }
+        input:focus { border-color: var(--primary); }
+        
+        .btn { 
+            width: 100%; 
+            padding: 14px; 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            border-radius: 10px; 
+            font-size: 16px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            margin-top: 10px; 
+        }
+        .btn-back { background: #888; margin-top: 10px; }
+        .btn-logout { background: #dc3545; margin-top: 30px; }
+        
+        .btn:disabled { background: #ccc; }
+
+        /* ലോഗിൻ ചെയ്ത ശേഷം കാണുന്ന ഡാഷ്ബോർഡ് */
+        .dashboard-content {
+            text-align: center;
+            padding: 20px;
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div id="regPage" class="page active">
-        <h2 style="text-align:center; color:var(--primary);">പുതിയ രജിസ്‌ട്രേഷൻ</h2>
-        <input type="text" id="mName" placeholder="മദ്റസയുടെ പേര്">
-        <input type="text" id="mPlace" placeholder="സ്ഥലം">
-        <input type="text" id="mReg" placeholder="രജിസ്റ്റർ നമ്പർ">
-        <input type="text" id="mUser" placeholder="User ID">
-        <input type="password" id="mUsthadPass" placeholder="ഉസ്താദ് പാസ്‌വേഡ്">
-        <input type="password" id="mParentPass" placeholder="പാരന്റ് പാസ്‌വേഡ്">
-        <button class="btn" id="regBtn" onclick="register()">Register Now</button>
+    <div class="container">
+        <div id="reg-trigger" class="secret-trigger" onclick="showPage('regPage')">
+            <i class="fa fa-plus"></i>
+        </div>
+
+        <div id="loginPage" class="page active">
+            <h1>എന്റെ മദ്റസ</h1>
+            <p style="text-align: center; color: #666; margin-bottom: 30px;">Login to Portal</p>
+            
+            <div class="input-group">
+                <input type="text" id="logRegNo" placeholder="മദ്റസ രജിസ്റ്റർ നമ്പർ">
+            </div>
+            <div class="input-group">
+                <input type="password" id="logPass" placeholder="പാസ്‌വേഡ്">
+            </div>
+            <button class="btn" id="loginBtn" onclick="handleLogin()">Login</button>
+        </div>
+
+        <div id="regPage" class="page">
+            <h2>പുതിയ രജിസ്‌ട്രേഷൻ</h2>
+            <input type="text" id="mName" placeholder="മദ്റസയുടെ പേര്" class="input-group">
+            <input type="text" id="mPlace" placeholder="സ്ഥലം" class="input-group">
+            <input type="text" id="mReg" placeholder="രജിസ്റ്റർ നമ്പർ" class="input-group">
+            <input type="text" id="mUser" placeholder="User ID (Unique)" class="input-group">
+            <input type="password" id="mUsthadPass" placeholder="Usthad Password" class="input-group">
+            <input type="password" id="mParentPass" placeholder="Parent Password" class="input-group">
+            
+            <button class="btn" id="regBtn" onclick="register()">Register Now</button>
+            <button class="btn btn-back" onclick="showPage('loginPage')">Back to Login</button>
+        </div>
+
+        <div id="mainPage" class="page">
+            <div class="dashboard-content">
+                <h2 id="welcomeText">സ്വാഗതം</h2>
+                <p>നിങ്ങൾ വിജയകരമായി ലോഗിൻ ചെയ്തിരിക്കുന്നു.</p>
+                <button class="btn btn-logout" onclick="logout()">Logout</button>
+            </div>
+        </div>
     </div>
-</div>
 
 <script>
+    // Firebase Configuration
     const firebaseConfig = {
         apiKey: "AIzaSyBAPJUq6ubYpALsqaT0DJi9KnLabtuaMyI",
         authDomain: "enttemadrasa.firebaseapp.com",
@@ -46,11 +142,56 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    // പേജുകൾ മാറ്റാനുള്ള ഫങ്ക്ഷൻ
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        
+        // ലോഗിൻ പേജിൽ മാത്രമേ പ്ലസ് ബട്ടൺ കാണാവൂ (വേണമെങ്കിൽ ഇത് ഹൈഡ് ചെയ്യാം)
+        document.getElementById('reg-trigger').style.display = (pageId === 'loginPage') ? 'flex' : 'none';
+    }
+
+    // ലോഗിൻ ഫങ്ക്ഷൻ
+    async function handleLogin() {
+        const regNo = document.getElementById('logRegNo').value.trim();
+        const pass = document.getElementById('logPass').value.trim();
+        const btn = document.getElementById('loginBtn');
+
+        if(!regNo || !pass) return alert("വിവരങ്ങൾ പൂരിപ്പിക്കുക!");
+
+        btn.disabled = true;
+        btn.innerText = "Checking...";
+
+        try {
+            const snap = await db.ref('madrasa_requests').once('value');
+            let userFound = false;
+
+            snap.forEach(child => {
+                const data = child.val();
+                // രജിസ്റ്റർ നമ്പറും പാസ്‌വേഡും പരിശോധിക്കുന്നു (Usthad അല്ലെങ്കിൽ Parent പാസ്‌വേഡ്)
+                if(data.reg === regNo && (data.usthadPass === pass || data.parentPass === pass)) {
+                    userFound = true;
+                    document.getElementById('welcomeText').innerText = "സ്വാഗതം, " + data.name;
+                    showPage('mainPage');
+                }
+            });
+
+            if(!userFound) alert("രജിസ്റ്റർ നമ്പറോ പാസ്‌വേഡോ തെറ്റാണ്!");
+
+        } catch (e) {
+            alert("Error: " + e.message);
+        }
+        btn.disabled = false;
+        btn.innerText = "Login";
+    }
+
+    // രജിസ്ട്രേഷൻ ഫങ്ക്ഷൻ
     async function register() {
         const uInput = document.getElementById('mUser').value.trim();
+        const regNo = document.getElementById('mReg').value.trim();
         const btn = document.getElementById('regBtn');
         
-        if(!uInput) return alert("User ID നൽകുക!");
+        if(!uInput || !regNo) return alert("User ID-യും രജിസ്റ്റർ നമ്പറും നൽകുക!");
 
         btn.disabled = true;
         btn.innerText = "പ്രോസസ്സ് ചെയ്യുന്നു...";
@@ -59,19 +200,26 @@
             const data = {
                 name: document.getElementById('mName').value,
                 place: document.getElementById('mPlace').value,
-                reg: document.getElementById('mReg').value,
+                reg: regNo,
                 usthadPass: document.getElementById('mUsthadPass').value,
                 parentPass: document.getElementById('mParentPass').value,
                 status: "approved"
             };
 
             await db.ref('madrasa_requests/' + uInput).set(data);
-            alert("വിജയകരമായി രജിസ്റ്റർ ചെയ്തു!");
-            location.reload(); 
+            alert("വിജയകരമായി രജിസ്റ്റർ ചെയ്തു! ഇനി ലോഗിൻ ചെയ്യാം.");
+            showPage('loginPage');
         } catch (e) {
             alert("Error: " + e.message);
-            btn.disabled = false;
-            btn.innerText = "Register Now";
+        }
+        btn.disabled = false;
+        btn.innerText = "Register Now";
+    }
+
+    // ലോഗൗട്ട് ഫങ്ക്ഷൻ
+    function logout() {
+        if(confirm("Logout ചെയ്യട്ടെ?")) {
+            location.reload();
         }
     }
 </script>
