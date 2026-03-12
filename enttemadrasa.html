@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Madrasa Admin</title>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.js"></script>
+
+    <style>
+        :root { --primary: #004d00; --bg: #f4f7f6; --boys: #0b5ed7; --girls: #d63384; --total: #198754; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 0; }
+        .container { width: 100%; max-width: 600px; background: white; min-height: 100vh; margin: auto; position: relative; padding: 15px; box-sizing: border-box; }
+        
+        .secret-trigger { position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; color: #ccc; cursor: pointer; border: 1px solid #ddd; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10; font-size: 14px; background: white; }
+        .page { display: none; animation: fadeIn 0.4s; }
+        .active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        h1, h2 { color: var(--primary); text-align: center; margin-bottom: 15px; }
+        .input-group { margin-bottom: 12px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; color: #555; }
+        input { width: 100%; padding: 12px; border: 1.5px solid #eee; border-radius: 10px; box-sizing: border-box; font-size: 15px; }
+        
+        .btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        
+        .preview-list { background: #f0f0f0; padding: 10px; border-radius: 10px; margin-top: 10px; font-size: 13px; }
+        .preview-item { background: white; padding: 8px; border-radius: 5px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--primary); }
+
+        .img-preview { width: 100%; height: 200px; border-radius: 15px; object-fit: cover; background: #eee; margin-bottom: 15px; border: 2px dashed #ccc; cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        #crop-area { display: none; margin-bottom: 15px; }
+
+        .table-responsive { overflow-x: auto; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 450px; }
+        th, td { border: 1px solid #ddd; padding: 10px 5px; text-align: center; }
+        th { background: #2c3e50; color: white; }
+        .contact-icons { display: flex; justify-content: center; gap: 12px; font-size: 18px; }
+        
+        .class-form { background: #fafafa; padding: 15px; border-radius: 12px; border: 1px solid #eee; margin-bottom: 20px; }
+        .row-flex { display: flex; gap: 10px; }
+        .action-btns { display: flex; gap: 10px; }
+        .action-btns i { cursor: pointer; padding: 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="main-plus-btn" class="secret-trigger" onclick="showPage('regPage')">+</div>
+
+        <div id="loginPage" class="page active">
+            <h1>എന്‍റെ മദ്റസ </h1>
+            <div class="input-group">
+                <input type="text" id="logReg" placeholder="Madrasa Register Number">
+            </div>
+            <div class="input-group">
+                <input type="password" id="logPass" placeholder="Password">
+            </div>
+            <button class="btn" onclick="handleLogin()">Login</button>
+        </div>
+
+        <div id="regPage" class="page">
+            <h2>New Registration</h2>
+            <input type="text" id="mName" placeholder="Madrasa Name" class="input-group">
+            <input type="text" id="mPlace" placeholder="Place" class="input-group">
+            <input type="text" id="mReg" placeholder="Register Number" class="input-group">
+            <input type="text" id="mUser" placeholder="Desired User ID" class="input-group">
+            <input type="password" id="mUsthadPass" placeholder="Usthad Password" class="input-group">
+            <input type="password" id="mParentPass" placeholder="Parent Password" class="input-group">
+            <button class="btn" onclick="register()">Register Now</button>
+            <button class="btn" style="background:#888;" onclick="showPage('loginPage')">Back to Login</button>
+        </div>
+
+        <div id="usthadPage" class="page">
+            <h2>Admin Panel</h2>
+            
+            <div id="crop-area"></div>
+            <button id="crop-btn" class="btn" style="display:none; background:#f39c12;" onclick="cropImage()">Crop Photo</button>
+
+            <div class="img-preview" id="preview-box" onclick="document.getElementById('fileInput').click()">
+                <img id="profileImg" src="" style="display:none; width:100%; height:100%;">
+                <span id="imgPlaceholder">Tap to Set Madrasa Photo</span>
+            </div>
+            <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="initCroppie(this)">
+
+            <div class="class-form">
+                <h4 id="formTitle" style="margin:0 0 10px 0;">Add New Class</h4>
+                <input type="hidden" id="editIndex" value="-1">
+                <div class="row-flex">
+                    <input type="text" id="clsName" placeholder="Class (e.g. 1)" style="flex:2">
+                    <input type="text" id="clsDiv" placeholder="Div" style="flex:1">
+                </div>
+                <div class="row-flex" style="margin-top:10px;">
+                    <input type="number" id="clsBoys" placeholder="Boys Count">
+                    <input type="number" id="clsGirls" placeholder="Girls Count">
+                </div>
+                <input type="text" id="clsUsthad" placeholder="Usthad Name" class="input-group" style="margin-top:10px;">
+                <input type="number" id="clsPhone" placeholder="Contact Number" class="input-group">
+                <button id="addBtn" class="btn" style="background:#2c3e50;" onclick="addClass()">Add to List</button>
+                <button id="cancelEditBtn" class="btn" style="display:none; background:#888;" onclick="resetClassForm()">Cancel Edit</button>
+            </div>
+
+            <div id="adminClassList" class="preview-list">
+                <strong>Saved Classes:</strong>
+                <div id="previewContainer" style="margin-top:10px;">No classes added..</div>
+            </div>
+
+            <button class="btn" onclick="saveAllData()">Save All Changes</button>
+            <button class="btn" style="background:#dc3545; margin-top:20px;" onclick="location.reload()">Logout</button>
+        </div>
+
+        <div id="parentPage" class="page">
+            <img id="vImg" class="img-preview" src="" style="display:block; border:none; pointer-events:none;">
+            <h2 id="vName" style="margin-bottom:0;"></h2>
+            <p id="vRegNo" style="text-align:center; color:var(--primary); font-weight:bold; margin:2px 0;"></p>
+            <p id="vPlace" style="text-align:center; color:#666; font-size:14px; margin-top:0;"></p>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th rowspan="2">CLASS</th>
+                            <th colspan="3">STUDENTS</th>
+                            <th rowspan="2">USTHAD</th>
+                            <th rowspan="2">CONTACT</th>
+                        </tr>
+                        <tr>
+                            <th>B</th><th>G</th><th>T</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vTableBody"></tbody>
+                </table>
+            </div>
+            <button class="btn" style="background:#888; margin-top:30px;" onclick="location.reload()">Back</button>
+        </div>
+    </div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyBAPJUq6ubYpALsqaT0DJi9KnLabtuaMyI",
+        authDomain: "enttemadrasa.firebaseapp.com",
+        databaseURL: "https://enttemadrasa-default-rtdb.firebaseio.com", // ഇത് ശ്രദ്ധിക്കുക
+        projectId: "enttemadrasa",
+        storageBucket: "enttemadrasa.firebasestorage.app",
+        appId: "1:623531881201:web:b863793340c3901cedaf50"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    
+    let currentMid = "";
+    let classes = [];
+    let base64Img = "";
+    let croppieInstance = null;
+
+    function showPage(p) { 
+        document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+        document.getElementById(p).classList.add('active');
+        document.getElementById('main-plus-btn').style.display = (p === 'loginPage') ? 'flex' : 'none';
+    }
+
+    function initCroppie(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('crop-area').style.display = 'block';
+                document.getElementById('crop-btn').style.display = 'block';
+                document.getElementById('preview-box').style.display = 'none';
+                if (croppieInstance) croppieInstance.destroy();
+                croppieInstance = new Croppie(document.getElementById('crop-area'), {
+                    viewport: { width: 300, height: 180, type: 'square' },
+                    boundary: { width: 320, height: 250 },
+                    showZoomer: true
+                });
+                croppieInstance.bind({ url: e.target.result });
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function cropImage() {
+        croppieInstance.result({ type: 'base64', size: 'viewport' }).then(function(res) {
+            base64Img = res;
+            document.getElementById('profileImg').src = res;
+            document.getElementById('profileImg').style.display = 'block';
+            document.getElementById('imgPlaceholder').style.display = 'none';
+            document.getElementById('crop-area').style.display = 'none';
+            document.getElementById('crop-btn').style.display = 'none';
+            document.getElementById('preview-box').style.display = 'flex';
+        });
+    }
+
+    // CHECK IF REGISTER NUMBER EXISTS BEFORE SAVING
+    async function register() {
+        const regInput = document.getElementById('mReg').value;
+        const uInput = document.getElementById('mUser').value;
+
+        if(!regInput || !uInput) return alert("Please fill all fields");
+
+        const snap = await db.ref('madrasa_requests').once('value');
+        let exists = false;
+        snap.forEach(child => {
+            if(child.val().reg === regInput) exists = true;
+        });
+
+        if(exists) {
+            alert("This Register Number is already registered!");
+            return;
+        }
+
+        const d = {
+            name: document.getElementById('mName').value, place: document.getElementById('mPlace').value,
+            reg: regInput, usthadPass: document.getElementById('mUsthadPass').value,
+            parentPass: document.getElementById('mParentPass').value, status: "pending", photo: "", classes: []
+        };
+        db.ref('madrasa_requests/' + uInput).set(d).then(() => { 
+            alert("Registered Successfully! Wait for approval."); 
+            location.reload(); 
+        });
+    }
+
+    function handleLogin() {
+        const r = document.getElementById('logReg').value;
+        const p = document.getElementById('logPass').value;
+        db.ref('madrasa_requests').once('value', snap => {
+            let success = false;
+            snap.forEach(c => {
+                let m = c.val();
+                if(m.reg === r && m.status === 'approved') {
+                    currentMid = c.key;
+                    if(p === m.usthadPass) {
+                        success = true;
+                        base64Img = m.photo || "";
+                        if(base64Img) {
+                            document.getElementById('profileImg').src = base64Img;
+                            document.getElementById('profileImg').style.display = 'block';
+                            document.getElementById('imgPlaceholder').style.display = 'none';
+                        }
+                        classes = m.classes || [];
+                        updateAdminPreview();
+                        showPage('usthadPage');
+                    } else if(p === m.parentPass) {
+                        success = true;
+                        document.getElementById('vImg').src = m.photo || '';
+                        document.getElementById('vName').innerText = m.name;
+                        document.getElementById('vRegNo').innerText = "Reg No: " + m.reg;
+                        document.getElementById('vPlace').innerText = m.place;
+                        renderParentTable(m.classes || []);
+                        showPage('parentPage');
+                    }
+                }
+            });
+            if(!success) alert("Invalid Credentials or Account Not Approved!");
+        });
+    }
+
+    function addClass() {
+        const editIdx = parseInt(document.getElementById('editIndex').value);
+        const cls = {
+            name: document.getElementById('clsName').value,
+            div: document.getElementById('clsDiv').value || "",
+            b: parseInt(document.getElementById('clsBoys').value) || 0,
+            g: parseInt(document.getElementById('clsGirls').value) || 0,
+            u: document.getElementById('clsUsthad').value,
+            p: document.getElementById('clsPhone').value
+        };
+        if(!cls.name) return alert("Please enter class name");
+
+        if(editIdx === -1) {
+            classes.push(cls);
+        } else {
+            classes[editIdx] = cls;
+        }
+        
+        resetClassForm();
+        updateAdminPreview();
+    }
+
+    function resetClassForm() {
+        document.getElementById('editIndex').value = "-1";
+        document.getElementById('formTitle').innerText = "Add New Class";
+        document.getElementById('addBtn').innerText = "Add to List";
+        document.getElementById('cancelEditBtn').style.display = "none";
+        
+        document.getElementById('clsName').value = ""; document.getElementById('clsDiv').value = "";
+        document.getElementById('clsBoys').value = ""; document.getElementById('clsGirls').value = "";
+        document.getElementById('clsUsthad').value = ""; document.getElementById('clsPhone').value = "";
+    }
+
+    function editClass(index) {
+        const item = classes[index];
+        document.getElementById('editIndex').value = index;
+        document.getElementById('formTitle').innerText = "Edit Class Info";
+        document.getElementById('addBtn').innerText = "Update Class";
+        document.getElementById('cancelEditBtn').style.display = "block";
+
+        document.getElementById('clsName').value = item.name;
+        document.getElementById('clsDiv').value = item.div;
+        document.getElementById('clsBoys').value = item.b;
+        document.getElementById('clsGirls').value = item.g;
+        document.getElementById('clsUsthad').value = item.u;
+        document.getElementById('clsPhone').value = item.p;
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function updateAdminPreview() {
+        const container = document.getElementById('previewContainer');
+        if(classes.length === 0) { container.innerHTML = "No classes added.."; return; }
+        let html = "";
+        classes.forEach((item, index) => {
+            html += `<div class="preview-item">
+                        <span><strong>${item.name} ${item.div ? '- '+item.div : ''}</strong> (${item.b + item.g} Students)</span>
+                        <div class="action-btns">
+                            <i class="fa fa-edit" style="color:blue;" onclick="editClass(${index})"></i>
+                            <i class="fa fa-trash" style="color:red;" onclick="removeClass(${index})"></i>
+                        </div>
+                    </div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    function removeClass(index) {
+        if(confirm("Delete this class?")) {
+            classes.splice(index, 1);
+            updateAdminPreview();
+        }
+    }
+
+    function saveAllData() {
+        db.ref('madrasa_requests/' + currentMid).update({ photo: base64Img, classes: classes })
+        .then(() => alert("Data Saved Successfully!"));
+    }
+
+    function renderParentTable(data) {
+        let html = ''; let tb = 0, tg = 0;
+        data.forEach(item => {
+            let t = item.b + item.g; tb += item.b; tg += item.g;
+            html += `<tr>
+                <td style="font-weight:bold">${item.name} ${item.div ? '- '+item.div : ''}</td>
+                <td style="color:var(--boys)">${item.b}</td><td style="color:var(--girls)">${item.g}</td>
+                <td style="font-weight:bold">${t}</td><td style="text-align:left;">${item.u}</td>
+                <td class="contact-icons">
+                    <a href="tel:${item.p}" style="color:blue"><i class="fa fa-phone"></i></a>
+                    <a href="https://wa.me/91${item.p}" style="color:green"><i class="fab fa-whatsapp"></i></a>
+                </td>
+            </tr>`;
+        });
+        if(data.length > 0) html += `<tr style="background:#eee; font-weight:bold;"><td>TOTAL</td><td>${tb}</td><td>${tg}</td><td>${tb+tg}</td><td colspan="2"></td></tr>`;
+        document.getElementById('vTableBody').innerHTML = html;
+    }
+</script>
+</body>
+</html>
