@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Student Details</title>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 15px; margin: 0; }
+        .container { max-width: 1000px; margin: auto; background: white; border-radius: 15px; padding: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        
+        .admin-section { background: #eef2f3; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: none; }
+        .admin-section input { padding: 10px; margin: 5px; border: 1px solid #ccc; border-radius: 5px; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+        th { background: #2c3e50; color: white; padding: 12px; }
+        td { border: 1px solid #eee; padding: 12px; text-align: center; }
+        .total-row { background: #2c3e50; color: white; font-weight: bold; }
+        
+        .btn-add { background: #004d00; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        .contact-btns a { font-size: 18px; margin: 0 5px; text-decoration: none; }
+        .fa-phone { color: #007bff; }
+        .fa-whatsapp { color: #28a745; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2 id="mHead" style="text-align: center; color: #2c3e50;">വിദ്യാർത്ഥി വിവര പട്ടിക</h2>
+    
+    <div id="adminArea" class="admin-section">
+        <h4>ക്ലാസ് വിവരങ്ങൾ ചേർക്കുക (ഉസ്താദിന് മാത്രം)</h4>
+        <input type="text" id="cClass" placeholder="Class">
+        <input type="number" id="cBoys" placeholder="Boys">
+        <input type="number" id="cGirls" placeholder="Girls">
+        <input type="text" id="cUsthad" placeholder="Usthad Name">
+        <input type="number" id="cPhone" placeholder="Phone">
+        <button class="btn-add" onclick="saveClass()">ADD / UPDATE</button>
+    </div>
+
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>CLASS</th>
+                    <th>BOYS</th>
+                    <th>GIRLS</th>
+                    <th>TOTAL</th>
+                    <th>USTHAD</th>
+                    <th>CONTACT</th>
+                    <th class="admin-only" style="display:none">ACTION</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+            <tfoot id="tableFoot"></tfoot>
+        </table>
+    </div>
+    <button class="btn-add" style="margin-top:20px; background:#666" onclick="history.back()">BACK TO PROFILE</button>
+</div>
+
+<script>
+    const firebaseConfig = { /* നിങ്ങളുടെ Config ഇവിടെയും നൽകുക */ };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const params = new URLSearchParams(window.location.search);
+    const mId = params.get('id');
+    const role = params.get('role');
+
+    if(role === 'admin') {
+        document.getElementById('adminArea').style.display = 'block';
+    }
+
+    function loadData() {
+        db.ref('madrasa_requests/' + mId).on('value', snap => {
+            const data = snap.val();
+            const classes = data.classes || [];
+            let html = "";
+            let tb=0, tg=0, tt=0;
+
+            classes.forEach((c, i) => {
+                let rowT = (parseInt(c.b)||0) + (parseInt(c.g)||0);
+                tb += (parseInt(c.b)||0); tg += (parseInt(c.g)||0); tt += rowT;
+
+                html += `<tr>
+                    <td><b>${c.name}</b></td>
+                    <td>${c.b}</td>
+                    <td>${c.g}</td>
+                    <td style="background:#f9f9f9; font-weight:bold">${rowT}</td>
+                    <td>${c.u}</td>
+                    <td class="contact-btns">
+                        <a href="tel:${c.p}"><i class="fa fa-phone"></i></a>
+                        <a href="https://wa.me/91${c.p}"><i class="fab fa-whatsapp"></i></a>
+                    </td>
+                    ${role === 'admin' ? `<td><i class="fa fa-trash" style="color:red;cursor:pointer" onclick="deleteClass(${i})"></i></td>` : ''}
+                </tr>`;
+            });
+
+            document.getElementById('tableBody').innerHTML = html;
+            document.getElementById('tableFoot').innerHTML = `
+                <tr class="total-row">
+                    <td>TOTAL</td>
+                    <td>${tb}</td>
+                    <td>${tg}</td>
+                    <td>${tt}</td>
+                    <td colspan="3">MADRASA STRENGTH</td>
+                </tr>`;
+        });
+    }
+
+    async function saveClass() {
+        const newC = {
+            name: document.getElementById('cClass').value,
+            b: document.getElementById('cBoys').value,
+            g: document.getElementById('cGirls').value,
+            u: document.getElementById('cUsthad').value,
+            p: document.getElementById('cPhone').value
+        };
+
+        const snap = await db.ref('madrasa_requests/' + mId + '/classes').once('value');
+        let currentClasses = snap.val() || [];
+        currentClasses.push(newC);
+        await db.ref('madrasa_requests/' + mId + '/classes').set(currentClasses);
+        alert("Saved!");
+    }
+
+    async function deleteClass(index) {
+        if(confirm("Delete?")) {
+            const snap = await db.ref('madrasa_requests/' + mId + '/classes').once('value');
+            let currentClasses = snap.val();
+            currentClasses.splice(index, 1);
+            await db.ref('madrasa_requests/' + mId + '/classes').set(currentClasses);
+        }
+    }
+
+    loadData();
+</script>
+</body>
+</html>
