@@ -6,6 +6,7 @@
     <title>My Madrasa Admin</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.js"></script>
@@ -15,44 +16,48 @@
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 0; }
         .container { width: 100%; max-width: 600px; background: white; min-height: 100vh; margin: auto; position: relative; padding: 15px; box-sizing: border-box; }
         
-        .secret-trigger { position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; color: #ccc; cursor: pointer; border: 1px solid #ddd; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10; font-size: 14px; background: white; }
+        .secret-trigger { position: absolute; top: 10px; right: 10px; width: 35px; height: 35px; color: #aaa; cursor: pointer; border: 1.5px solid #ddd; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10; font-size: 18px; background: white; }
         .page { display: none; animation: fadeIn 0.4s; }
         .active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         h1, h2 { color: var(--primary); text-align: center; margin-bottom: 15px; }
         .input-group { margin-bottom: 12px; }
-        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; color: #555; }
-        input { width: 100%; padding: 12px; border: 1.5px solid #eee; border-radius: 10px; box-sizing: border-box; font-size: 15px; }
+        input { width: 100%; padding: 14px; border: 1.5px solid #eee; border-radius: 10px; box-sizing: border-box; font-size: 15px; outline: none; }
+        input:focus { border-color: var(--primary); }
         
-        .btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.3s; }
+        .btn:active { transform: scale(0.98); }
         
-        .preview-list { background: #f0f0f0; padding: 10px; border-radius: 10px; margin-top: 10px; font-size: 13px; }
-        .preview-item { background: white; padding: 8px; border-radius: 5px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--primary); }
+        .preview-list { background: #f8f9fa; padding: 12px; border-radius: 10px; margin-top: 15px; border: 1px solid #eee; }
+        .preview-item { background: white; padding: 10px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
         .img-preview { width: 100%; height: 200px; border-radius: 15px; object-fit: cover; background: #eee; margin-bottom: 15px; border: 2px dashed #ccc; cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         #crop-area { display: none; margin-bottom: 15px; }
 
-        .table-responsive { overflow-x: auto; margin-top: 15px; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 450px; }
-        th, td { border: 1px solid #ddd; padding: 10px 5px; text-align: center; }
-        th { background: #2c3e50; color: white; }
-        .contact-icons { display: flex; justify-content: center; gap: 12px; font-size: 18px; }
+        .table-responsive { overflow-x: auto; margin-top: 15px; border-radius: 10px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 450px; background: white; }
+        th, td { border: 1px solid #eee; padding: 12px 8px; text-align: center; }
+        th { background: #2c3e50; color: white; font-weight: 500; }
+        .contact-icons { display: flex; justify-content: center; gap: 15px; font-size: 18px; }
         
-        .class-form { background: #fafafa; padding: 15px; border-radius: 12px; border: 1px solid #eee; margin-bottom: 20px; }
+        .class-form { background: #fff; padding: 15px; border-radius: 12px; border: 1px solid #eee; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
         .row-flex { display: flex; gap: 10px; }
-        .action-btns { display: flex; gap: 10px; }
-        .action-btns i { cursor: pointer; padding: 5px; }
+        .action-btns { display: flex; gap: 12px; }
+        .action-btns i { cursor: pointer; padding: 5px; font-size: 16px; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <div id="main-plus-btn" class="secret-trigger" onclick="showPage('regPage')">+</div>
+        <div id="main-plus-btn" class="secret-trigger" onclick="showPage('regPage')">
+            <i class="fa fa-user-plus"></i>
+        </div>
 
         <div id="loginPage" class="page active">
-            <h1>എന്‍റെ മദ്റസ </h1>
-            <div class="input-group">
+            <h1 style="margin-top: 40px;">എന്‍റെ മദ്റസ</h1>
+            <p style="text-align: center; color: #666; font-size: 14px;">Management Portal</p>
+            <div class="input-group" style="margin-top: 30px;">
                 <input type="text" id="logReg" placeholder="Madrasa Register Number">
             </div>
             <div class="input-group">
@@ -66,7 +71,7 @@
             <input type="text" id="mName" placeholder="Madrasa Name" class="input-group">
             <input type="text" id="mPlace" placeholder="Place" class="input-group">
             <input type="text" id="mReg" placeholder="Register Number" class="input-group">
-            <input type="text" id="mUser" placeholder="Desired User ID" class="input-group">
+            <input type="text" id="mUser" placeholder="Desired User ID (Unique)" class="input-group">
             <input type="password" id="mUsthadPass" placeholder="Usthad Password" class="input-group">
             <input type="password" id="mParentPass" placeholder="Parent Password" class="input-group">
             <button class="btn" onclick="register()">Register Now</button>
@@ -77,11 +82,11 @@
             <h2>Admin Panel</h2>
             
             <div id="crop-area"></div>
-            <button id="crop-btn" class="btn" style="display:none; background:#f39c12;" onclick="cropImage()">Crop Photo</button>
+            <button id="crop-btn" class="btn" style="display:none; background:#f39c12;" onclick="cropImage()">Crop & Save Photo</button>
 
             <div class="img-preview" id="preview-box" onclick="document.getElementById('fileInput').click()">
                 <img id="profileImg" src="" style="display:none; width:100%; height:100%;">
-                <span id="imgPlaceholder">Tap to Set Madrasa Photo</span>
+                <span id="imgPlaceholder"><i class="fa fa-camera"></i><br>Tap to Set Madrasa Photo</span>
             </div>
             <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="initCroppie(this)">
 
@@ -89,20 +94,20 @@
                 <h4 id="formTitle" style="margin:0 0 10px 0;">Add New Class</h4>
                 <input type="hidden" id="editIndex" value="-1">
                 <div class="row-flex">
-                    <input type="text" id="clsName" placeholder="Class (e.g. 1)" style="flex:2">
+                    <input type="text" id="clsName" placeholder="Class" style="flex:2">
                     <input type="text" id="clsDiv" placeholder="Div" style="flex:1">
                 </div>
                 <div class="row-flex" style="margin-top:10px;">
-                    <input type="number" id="clsBoys" placeholder="Boys Count">
-                    <input type="number" id="clsGirls" placeholder="Girls Count">
+                    <input type="number" id="clsBoys" placeholder="Boys">
+                    <input type="number" id="clsGirls" placeholder="Girls">
                 </div>
                 <input type="text" id="clsUsthad" placeholder="Usthad Name" class="input-group" style="margin-top:10px;">
-                <input type="number" id="clsPhone" placeholder="Contact Number" class="input-group">
+                <input type="number" id="clsPhone" placeholder="Phone Number" class="input-group">
                 <button id="addBtn" class="btn" style="background:#2c3e50;" onclick="addClass()">Add to List</button>
                 <button id="cancelEditBtn" class="btn" style="display:none; background:#888;" onclick="resetClassForm()">Cancel Edit</button>
             </div>
 
-            <div id="adminClassList" class="preview-list">
+            <div class="preview-list">
                 <strong>Saved Classes:</strong>
                 <div id="previewContainer" style="margin-top:10px;">No classes added..</div>
             </div>
@@ -133,22 +138,21 @@
                     <tbody id="vTableBody"></tbody>
                 </table>
             </div>
-            <button class="btn" style="background:#888; margin-top:30px;" onclick="location.reload()">Back</button>
+            <button class="btn" style="background:#888; margin-top:30px;" onclick="location.reload()">Back to Login</button>
         </div>
     </div>
 
 <script>
+    // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyBAPJUq6ubYpALsqaT0DJi9KnLabtuaMyI",
         authDomain: "enttemadrasa.firebaseapp.com",
-        databaseURL: "https://enttemadrasa-default-rtdb.firebaseio.com", // ഇത് ശ്രദ്ധിക്കുക
+        databaseURL: "https://enttemadrasa-default-rtdb.firebaseio.com",
         projectId: "enttemadrasa",
         storageBucket: "enttemadrasa.firebasestorage.app",
         appId: "1:623531881201:web:b863793340c3901cedaf50"
     };
 
-
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     
@@ -161,6 +165,7 @@
         document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
         document.getElementById(p).classList.add('active');
         document.getElementById('main-plus-btn').style.display = (p === 'loginPage') ? 'flex' : 'none';
+        window.scrollTo(0,0);
     }
 
     function initCroppie(input) {
@@ -194,12 +199,12 @@
         });
     }
 
-    // CHECK IF REGISTER NUMBER EXISTS BEFORE SAVING
     async function register() {
         const regInput = document.getElementById('mReg').value;
         const uInput = document.getElementById('mUser').value;
+        const name = document.getElementById('mName').value;
 
-        if(!regInput || !uInput) return alert("Please fill all fields");
+        if(!regInput || !uInput || !name) return alert("Please fill all fields");
 
         const snap = await db.ref('madrasa_requests').once('value');
         let exists = false;
@@ -207,25 +212,31 @@
             if(child.val().reg === regInput) exists = true;
         });
 
-        if(exists) {
-            alert("This Register Number is already registered!");
-            return;
-        }
+        if(exists) return alert("This Register Number is already registered!");
 
         const d = {
-            name: document.getElementById('mName').value, place: document.getElementById('mPlace').value,
-            reg: regInput, usthadPass: document.getElementById('mUsthadPass').value,
-            parentPass: document.getElementById('mParentPass').value, status: "pending", photo: "", classes: []
+            name: name, 
+            place: document.getElementById('mPlace').value,
+            reg: regInput, 
+            usthadPass: document.getElementById('mUsthadPass').value,
+            parentPass: document.getElementById('mParentPass').value, 
+            status: "approved", // TESTING ആവശ്യത്തിനായി നേരിട്ട് approved ആക്കി മാറ്റുന്നു
+            photo: "", 
+            classes: []
         };
+        
         db.ref('madrasa_requests/' + uInput).set(d).then(() => { 
-            alert("Registered Successfully! Wait for approval."); 
-            location.reload(); 
-        });
+            alert("Registered Successfully! You can now login."); 
+            showPage('loginPage');
+        }).catch(e => alert("Error: " + e.message));
     }
 
     function handleLogin() {
         const r = document.getElementById('logReg').value;
         const p = document.getElementById('logPass').value;
+        
+        if(!r || !p) return alert("Enter credentials");
+
         db.ref('madrasa_requests').once('value', snap => {
             let success = false;
             snap.forEach(c => {
@@ -254,7 +265,7 @@
                     }
                 }
             });
-            if(!success) alert("Invalid Credentials or Account Not Approved!");
+            if(!success) alert("Invalid Credentials or User Not Found!");
         });
     }
 
@@ -285,7 +296,6 @@
         document.getElementById('formTitle').innerText = "Add New Class";
         document.getElementById('addBtn').innerText = "Add to List";
         document.getElementById('cancelEditBtn').style.display = "none";
-        
         document.getElementById('clsName').value = ""; document.getElementById('clsDiv').value = "";
         document.getElementById('clsBoys').value = ""; document.getElementById('clsGirls').value = "";
         document.getElementById('clsUsthad').value = ""; document.getElementById('clsPhone').value = "";
@@ -297,14 +307,12 @@
         document.getElementById('formTitle').innerText = "Edit Class Info";
         document.getElementById('addBtn').innerText = "Update Class";
         document.getElementById('cancelEditBtn').style.display = "block";
-
         document.getElementById('clsName').value = item.name;
         document.getElementById('clsDiv').value = item.div;
         document.getElementById('clsBoys').value = item.b;
         document.getElementById('clsGirls').value = item.g;
         document.getElementById('clsUsthad').value = item.u;
         document.getElementById('clsPhone').value = item.p;
-        
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -316,8 +324,8 @@
             html += `<div class="preview-item">
                         <span><strong>${item.name} ${item.div ? '- '+item.div : ''}</strong> (${item.b + item.g} Students)</span>
                         <div class="action-btns">
-                            <i class="fa fa-edit" style="color:blue;" onclick="editClass(${index})"></i>
-                            <i class="fa fa-trash" style="color:red;" onclick="removeClass(${index})"></i>
+                            <i class="fa fa-edit" style="color:#0b5ed7;" onclick="editClass(${index})"></i>
+                            <i class="fa fa-trash" style="color:#dc3545;" onclick="removeClass(${index})"></i>
                         </div>
                     </div>`;
         });
@@ -332,8 +340,11 @@
     }
 
     function saveAllData() {
-        db.ref('madrasa_requests/' + currentMid).update({ photo: base64Img, classes: classes })
-        .then(() => alert("Data Saved Successfully!"));
+        if(!currentMid) return;
+        db.ref('madrasa_requests/' + currentMid).update({ 
+            photo: base64Img, 
+            classes: classes 
+        }).then(() => alert("Data Saved Successfully!"));
     }
 
     function renderParentTable(data) {
@@ -345,13 +356,13 @@
                 <td style="color:var(--boys)">${item.b}</td><td style="color:var(--girls)">${item.g}</td>
                 <td style="font-weight:bold">${t}</td><td style="text-align:left;">${item.u}</td>
                 <td class="contact-icons">
-                    <a href="tel:${item.p}" style="color:blue"><i class="fa fa-phone"></i></a>
-                    <a href="https://wa.me/91${item.p}" style="color:green"><i class="fab fa-whatsapp"></i></a>
+                    <a href="tel:${item.p}" style="color:#0b5ed7"><i class="fa fa-phone"></i></a>
+                    <a href="https://wa.me/91${item.p}" style="color:#198754"><i class="fab fa-whatsapp"></i></a>
                 </td>
             </tr>`;
         });
-        if(data.length > 0) html += `<tr style="background:#eee; font-weight:bold;"><td>TOTAL</td><td>${tb}</td><td>${tg}</td><td>${tb+tg}</td><td colspan="2"></td></tr>`;
-        document.getElementById('vTableBody').innerHTML = html;
+        if(data.length > 0) html += `<tr style="background:#f1f1f1; font-weight:bold;"><td>TOTAL</td><td>${tb}</td><td>${tg}</td><td>${tb+tg}</td><td colspan="2"></td></tr>`;
+        document.getElementById('vTableBody').innerHTML = html || '<tr><td colspan="6">No data available</td></tr>';
     }
 </script>
 </body>
