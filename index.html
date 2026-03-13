@@ -89,9 +89,9 @@
                  <i class="fa fa-id-badge"></i> ID CARD PORTAL
            </button>
 
-            <button class="btn" style="background: #f8d7da; color: #721c24; margin-top: 50px;" onclick="location.reload()">
-                <i class="fa fa-sign-out-alt"></i> LOGOUT
-            </button>
+           <button class="btn" style="background: #f8d7da; color: #721c24; margin-top: 50px;" onclick="logout()">
+    <i class="fa fa-sign-out-alt"></i> LOGOUT
+</button>
             
         </div>
 
@@ -179,42 +179,46 @@
     }
 
     // ലോഗിൻ ഫങ്ക്ഷൻ
-    async function handleLogin() {
-        const reg = document.getElementById('logReg').value.trim();
-        const pass = document.getElementById('logPass').value.trim();
-        const btn = document.getElementById('loginBtn');
+  async function handleLogin() {
+    const reg = document.getElementById('logReg').value.trim();
+    const pass = document.getElementById('logPass').value.trim();
+    const btn = document.getElementById('loginBtn');
 
-        if(!reg || !pass) return alert("വിവരങ്ങൾ നൽകുക");
-        btn.disabled = true;
+    if(!reg || !pass) return alert("വിവരങ്ങൾ നൽകുക");
+    btn.disabled = true;
 
-        db.ref('madrasa_requests').once('value', snap => {
-            let foundUser = null;
-            let userId = "";
+    db.ref('madrasa_requests').once('value', snap => {
+        let foundUser = null;
+        let userId = "";
 
-            snap.forEach(c => {
-                const d = c.val();
-                if(d.reg === reg) {
-                    if(d.usthadPass === pass) {
-                        foundUser = d; userId = c.key; currentRole = "admin";
-                    } else if(d.parentPass === pass) {
-                        foundUser = d; userId = c.key; currentRole = "parent";
-                    }
+        snap.forEach(c => {
+            const d = c.val();
+            if(d.reg === reg) {
+                if(d.usthadPass === pass) {
+                    foundUser = d; userId = c.key; currentRole = "admin";
+                } else if(d.parentPass === pass) {
+                    foundUser = d; userId = c.key; currentRole = "parent";
                 }
-            });
-
-            if(foundUser) {
-                if(foundUser.status !== 'approved') {
-                    showPage('pendingPage');
-                } else {
-                    currentId = userId;
-                    loadProfile(foundUser);
-                }
-            } else {
-                alert("രജിസ്റ്റർ നമ്പറോ പാസ്‌വേഡോ തെറ്റാണ്!");
             }
-            btn.disabled = false;
         });
-    }
+
+        if(foundUser) {
+            if(foundUser.status !== 'approved') {
+                showPage('pendingPage');
+            } else {
+                currentId = userId;
+                // --- ഈ രണ്ട് വരികൾ പുതുതായി ചേർക്കുക ---
+                localStorage.setItem("madrasaId", userId);
+                localStorage.setItem("userRole", currentRole);
+                // --------------------------------------
+                loadProfile(foundUser);
+            }
+        } else {
+            alert("രജിസ്റ്റർ നമ്പറോ പാസ്‌വേഡോ തെറ്റാണ്!");
+        }
+        btn.disabled = false;
+    });
+}
 
     // പ്രൊഫൈൽ കാർഡ് ലോഡ് ചെയ്യുന്നു
     function loadProfile(d) {
@@ -245,7 +249,30 @@ function openDashboard() {
     // രക്ഷിതാവ് (parent) ആകുമ്പോൾ വ്യൂ ഓപ്ഷൻ മാത്രമുള്ള ഡാഷ്ബോർഡും ഇതിലൂടെ ലഭിക്കും
     window.location.href = `${baseUrl}?id=${currentId}&role=${currentRole}`;
 }
+// പേജ് തുറക്കുമ്പോൾ തന്നെ ലോഗിൻ ചെയ്തിട്ടുണ്ടോ എന്ന് നോക്കുന്നു
+window.onload = function() {
+    const savedId = localStorage.getItem("madrasaId");
+    const savedRole = localStorage.getItem("userRole");
 
+    if (savedId && savedRole) {
+        currentId = savedId;
+        currentRole = savedRole;
+        
+        db.ref('madrasa_requests/' + savedId).once('value', snap => {
+            if(snap.val() && snap.val().status === 'approved') {
+                loadProfile(snap.val()); // നേരിട്ട് മദ്റസ പ്രൊഫൈലിലേക്ക് പോകുന്നു
+            }
+        });
+    }
+};
+
+// ലോഗൗട്ട് ചെയ്യുമ്പോൾ വിവരങ്ങൾ ഡിലീറ്റ് ചെയ്യാൻ
+function logout() {
+    if(confirm("നിങ്ങൾ ലോഗൗട്ട് ചെയ്യാൻ ആഗ്രഹിക്കുന്നുണ്ടോ?")) {
+        localStorage.clear();
+        location.reload();
+    }
+}
 // ID CARD PORTAL തുറക്കാനുള്ള ഫങ്ക്ഷൻ
 function openIDPortal() {
     if (!currentId) {
