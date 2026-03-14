@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Special Day Quiz - Student Portal</title>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root { --primary: #004d00; --gold: #d4af37; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding: 15px; }
+        .quiz-container { max-width: 500px; margin: auto; background: white; border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); min-height: 80vh; }
+        
+        /* Login Style */
+        .login-box { text-align: center; padding: 20px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1.5px solid #ddd; border-radius: 10px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-primary { background: var(--primary); color: white; }
+
+        /* Student Info Card */
+        .student-card { background: linear-gradient(135deg, #004d00, #002b00); color: white; padding: 15px; border-radius: 15px; display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
+        .student-card img { width: 60px; height: 60px; border-radius: 50%; border: 2px solid var(--gold); object-fit: cover; }
+        .student-info h4 { margin: 0; font-size: 16px; }
+        .student-info p { margin: 2px 0; font-size: 12px; opacity: 0.8; }
+
+        /* Timer Style */
+        #timerBox { text-align: center; padding: 40px 20px; color: #d32f2f; }
+        .countdown { font-size: 30px; font-weight: bold; margin-top: 10px; }
+
+        /* Question Style */
+        .question-box { display: none; }
+        .q-title { font-size: 18px; font-weight: bold; color: var(--primary); margin-bottom: 20px; }
+        .option { background: #f8f9fa; border: 2px solid #eee; padding: 12px; border-radius: 10px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; }
+        .option:hover { border-color: var(--primary); background: #e8f5e9; }
+        .option.selected { background: var(--primary); color: white; border-color: var(--primary); }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div id="quizHeader" style="text-align: center; display: none;">
+        <h2 id="programTitle" style="color: var(--primary); margin-bottom: 5px;"></h2>
+        <hr>
+    </div>
+
+    <div id="loginSection" class="login-box">
+        <i class="fa fa-user-graduate" style="font-size: 50px; color: var(--primary);"></i>
+        <h3>Student Login</h3>
+        <p style="font-size: 13px; color: #666;">ഐഡി കാർഡിലെ വിവരങ്ങൾ നൽകുക</p>
+        <input type="text" id="stuReg" placeholder="വിദ്യാർത്ഥി രജിസ്റ്റർ നമ്പർ">
+        <input type="password" id="stuPass" placeholder="പാസ്‌വേഡ്">
+        <button class="btn btn-primary" onclick="studentLogin()">CONFIRM & ENTER</button>
+    </div>
+
+    <div id="quizSection" style="display: none;">
+        <div id="stuProfileCard"></div>
+
+        <div id="timerBox">
+            <i class="fa fa-clock" style="font-size: 40px;"></i>
+            <p>ക്വിസ് തുടങ്ങാൻ ബാക്കിയുള്ള സമയം:</p>
+            <div id="countdown" class="countdown">00:00:00</div>
+        </div>
+
+        <div id="questionArea" class="question-box">
+            <div id="currentQuestion"></div>
+            <button class="btn btn-primary" id="submitBtn" onclick="submitAnswer()" style="margin-top: 20px;">SUBMIT ANSWER</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Firebase Config (നിങ്ങളുടെ അതേ വിവരങ്ങൾ ഇവിടെയും വേണം)
+    const firebaseConfig = {
+        apiKey: "AIzaSyBAPJUq6ubYpALsqaT0DJi9KnLabtuaMyI",
+        authDomain: "enttemadrasa.firebaseapp.com",
+        databaseURL: "https://enttemadrasa-default-rtdb.firebaseio.com",
+        projectId: "enttemadrasa",
+        storageBucket: "enttemadrasa.firebasestorage.app",
+        appId: "1:623531881201:web:b863793340c3901cedaf50"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const mID = urlParams.get('mid'); // മദ്റസ ID
+
+    let currentStudent = null;
+    let quizData = null;
+    let selectedOption = null;
+
+    // 1. ലോഗിൻ ഫങ്ക്ഷൻ
+    function studentLogin() {
+        const reg = document.getElementById('stuReg').value.trim();
+        const pass = document.getElementById('stuPass').value.trim();
+
+        // ഐഡി കാർഡ് പോർട്ടലിൽ സേവ് ചെയ്തിട്ടുള്ള വിദ്യാർത്ഥികളുടെ ലിസ്റ്റിൽ നിന്ന് തിരയുന്നു
+        db.ref('students/' + mID).once('value', snap => {
+            let found = false;
+            snap.forEach(child => {
+                const s = child.val();
+                if(s.regNo === reg && s.password === pass) {
+                    currentStudent = s;
+                    found = true;
+                }
+            });
+
+            if(found) {
+                showQuizDashboard();
+            } else {
+                alert("രജിസ്റ്റർ നമ്പറോ പാസ്‌വേഡോ തെറ്റാണ്!");
+            }
+        });
+    }
+
+    // 2. ക്വിസ് ഡാഷ്ബോർഡ് കാണിക്കുന്നു
+    function showQuizDashboard() {
+        document.getElementById('loginSection').style.display = 'none';
+        document.getElementById('quizSection').style.display = 'block';
+
+        // പ്രൊഫൈൽ കാർഡ് നിർമ്മാണം
+        document.getElementById('stuProfileCard').innerHTML = `
+            <div class="student-card">
+                <img src="${currentStudent.photo || 'https://via.placeholder.com/100'}">
+                <div class="student-info">
+                    <h4>${currentStudent.name}</h4>
+                    <p>Reg No: ${currentStudent.regNo} | Class: ${currentStudent.class}</p>
+                    <p>Mentor: ${currentStudent.mentor}</p>
+                </div>
+            </div>`;
+
+        loadQuizInfo();
+    }
+
+    // 3. ക്വിസ് വിവരങ്ങളും ടൈമറും ലോഡ് ചെയ്യുന്നു
+    function loadQuizInfo() {
+        db.ref('quizzes/' + mID).on('value', snap => {
+            quizData = snap.val();
+            if(!quizData || quizData.status !== 'published') {
+                document.getElementById('timerBox').innerHTML = "<h3>നിലവിൽ ക്വിസ് ലഭ്യമല്ല!</h3>";
+                return;
+            }
+
+            document.getElementById('quizHeader').style.display = 'block';
+            document.getElementById('programTitle').innerText = quizData.heading;
+
+            startTimer(quizData.startTime);
+        });
+    }
+
+    // 4. ടൈമർ ലോജിക്
+    function startTimer(startTime) {
+        const timerInterval = setInterval(() => {
+            const now = new Date().getTime();
+            const distance = startTime - now;
+
+            if (distance < 0) {
+                clearInterval(timerInterval);
+                showQuestions(); // സമയം കഴിഞ്ഞാൽ ചോദ്യങ്ങൾ കാണിക്കും
+            } else {
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                document.getElementById('countdown').innerHTML = hours + ":" + minutes + ":" + seconds;
+            }
+        }, 1000);
+    }
+
+    // 5. ചോദ്യങ്ങൾ കാണിക്കുന്നു
+    function showQuestions() {
+        document.getElementById('timerBox').style.display = 'none';
+        document.getElementById('questionArea').style.display = 'block';
+
+        // ഇവിടെ തൽക്കാലം ആദ്യത്തെ ചോദ്യം മാത്രം കാണിക്കുന്നു (മൾട്ടിപ്പിൾ ചോദ്യങ്ങളുണ്ടെങ്കിൽ ലൂപ്പ് ചെയ്യാം)
+        const q = quizData.questions[0]; 
+        let optionsHtml = q.options.map((opt, i) => `
+            <div class="option" onclick="selectOpt(this, ${i+1})">${opt}</div>
+        `).join('');
+
+        document.getElementById('currentQuestion').innerHTML = `
+            <div class="q-title">Q: ${q.question}</div>
+            ${optionsHtml}`;
+    }
+
+    function selectOpt(el, val) {
+        document.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+        el.classList.add('selected');
+        selectedOption = val;
+    }
+
+    // 6. സബ്മിഷൻ (മൈക്രോ സെക്കന്റ് കണക്കാക്കുന്നു)
+    function submitAnswer() {
+        if(!selectedOption) return alert("ദയവായി ഒരു ഓപ്ഷൻ തിരഞ്ഞെടുക്കുക!");
+
+        const submitTime = firebase.database.ServerValue.TIMESTAMP;
+        
+        const resultData = {
+            studentName: currentStudent.name,
+            regNo: currentStudent.regNo,
+            class: currentStudent.class,
+            mentor: currentStudent.mentor,
+            photo: currentStudent.photo || "",
+            selectedAnswer: selectedOption,
+            isCorrect: selectedOption == quizData.questions[0].correct,
+            submitTime: submitTime
+        };
+
+        db.ref('quiz_submissions/' + mID + '/' + currentStudent.regNo).set(resultData).then(() => {
+            alert("നിങ്ങളുടെ ഉത്തരം സബ്മിറ്റ് ചെയ്തു!");
+            location.reload(); // ഒരു തവണ സബ്മിറ്റ് ചെയ്താൽ പേജ് റീലോഡ് ആകും
+        });
+    }
+</script>
+
+</body>
+</html>
