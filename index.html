@@ -325,6 +325,21 @@ function openIDPortal() {
         window.location.href = `https://mannanimuhsin-sys.github.io/madrasa/student_id.html?mid=${currentId}`;
     }
 }
+// ക്വിസ് പോർട്ടൽ തുറക്കാനുള്ള ഫങ്ക്ഷൻ
+function openQuizPortal() {
+    if (!currentId || !currentRole) {
+        alert("ലോഗിൻ വിവരങ്ങൾ ലഭ്യമല്ല. ദയവായി വീണ്ടും ലോഗിൻ ചെയ്യുക.");
+        return;
+    }
+
+    if (currentRole === "admin") {
+        // ഉസ്താദ് ആണെങ്കിൽ അഡ്മിൻ ക്വിസ് പേജിലേക്ക് (id പാസ്സ് ചെയ്യുന്നു)
+        window.location.href = `admin_quiz.html?id=${currentId}`;
+    } else if (currentRole === "parent") {
+        // രക്ഷിതാവാണെങ്കിൽ സ്റ്റുഡന്റ് ക്വിസ് പേജിലേക്ക് (mid പാസ്സ് ചെയ്യുന്നു)
+        window.location.href = `student_quiz.html?mid=${currentId}`;
+    }
+}
 </script>
 
 </body>
