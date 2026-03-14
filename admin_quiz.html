@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quiz Admin Panel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #f4f4f4; padding: 20px; }
+        .admin-box { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); max-width: 600px; margin: auto; }
+        h2 { color: #004d00; text-align: center; }
+        input, select { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
+        .btn-add { background: #004d00; color: white; }
+        .btn-publish { background: #ff9800; color: white; }
+        .btn-danger { background: #f44336; color: white; }
+        .q-list { margin-top: 20px; border-top: 2px solid #eee; padding-top: 10px; }
+        .q-item { background: #f9f9f9; padding: 10px; margin-bottom: 5px; border-radius: 5px; font-size: 14px; position: relative; }
+    </style>
+</head>
+<body>
+
+<div class="admin-box">
+    <h2 id="madrasaName">Loading...</h2>
+    <h4 style="text-align:center;">Special Day Quiz Creator</h4>
+
+    <input type="text" id="quizHeading" placeholder="പ്രോഗ്രാം ഹെഡിംഗ് (ഉദാ: മീലാദ് ക്വിസ്)">
+    <input type="datetime-local" id="quizTime" title="ക്വിസ് തുടങ്ങേണ്ട സമയം">
+    
+    <hr>
+    
+    <div id="questionForm">
+        <input type="text" id="qText" placeholder="ചോദ്യം എഴുതുക">
+        <input type="text" id="opt1" placeholder="Option 1">
+        <input type="text" id="opt2" placeholder="Option 2">
+        <input type="text" id="opt3" placeholder="Option 3">
+        <input type="text" id="opt4" placeholder="Option 4">
+        <select id="correctOpt">
+            <option value="">ശരിയുത്തരം തിരഞ്ഞെടുക്കുക</option>
+            <option value="1">Option 1</option>
+            <option value="2">Option 2</option>
+            <option value="3">Option 3</option>
+            <option value="4">Option 4</option>
+        </select>
+        <button class="btn btn-add" onclick="addQuestion()">ADD QUESTION</button>
+    </div>
+
+    <div class="q-list" id="qListArea">
+        </div>
+
+    <button class="btn btn-publish" onclick="publishQuiz()">PUBLISH QUIZ</button>
+    <button class="btn btn-danger" onclick="clearQuiz()">REFRESH / CLEAR ALL</button>
+</div>
+
+<script>
+    // നിങ്ങളുടെ അതേ Firebase Config ഇവിടെയും നൽകുക
+    const firebaseConfig = {
+        apiKey: "AIzaSyBAPJUq6ubYpALsqaT0DJi9KnLabtuaMyI",
+        authDomain: "enttemadrasa.firebaseapp.com",
+        databaseURL: "https://enttemadrasa-default-rtdb.firebaseio.com",
+        projectId: "enttemadrasa",
+        storageBucket: "enttemadrasa.firebasestorage.app",
+        appId: "1:623531881201:web:b863793340c3901cedaf50"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // URL-ൽ നിന്ന് മദ്റസ ID എടുക്കുന്നു
+    const urlParams = new URLSearchParams(window.location.search);
+    const mID = urlParams.get('id');
+
+    // മദ്റസ പേര് ലോഡ് ചെയ്യാൻ
+    db.ref('madrasa_requests/' + mID).once('value', snap => {
+        if(snap.val()) document.getElementById('madrasaName').innerText = snap.val().name;
+    });
+
+    let questions = [];
+
+    function addQuestion() {
+        const q = {
+            question: document.getElementById('qText').value,
+            options: [
+                document.getElementById('opt1').value,
+                document.getElementById('opt2').value,
+                document.getElementById('opt3').value,
+                document.getElementById('opt4').value
+            ],
+            correct: document.getElementById('correctOpt').value
+        };
+
+        if(!q.question || !q.correct) return alert("വിവരങ്ങൾ പൂർണ്ണമല്ല!");
+
+        questions.push(q);
+        renderQuestions();
+        
+        // ഫോം ക്ലിയർ ചെയ്യാൻ
+        document.getElementById('qText').value = "";
+        document.getElementById('opt1').value = "";
+        document.getElementById('opt2').value = "";
+        document.getElementById('opt3').value = "";
+        document.getElementById('opt4').value = "";
+    }
+
+    function renderQuestions() {
+        const area = document.getElementById('qListArea');
+        area.innerHTML = questions.map((q, i) => `
+            <div class="q-item">
+                <b>${i+1}. ${q.question}</b> (Ans: ${q.correct})
+                <span style="color:red; cursor:pointer; float:right;" onclick="removeQ(${i})">Delete</span>
+            </div>
+        `).join('');
+    }
+
+    function removeQ(index) {
+        questions.splice(index, 1);
+        renderQuestions();
+    }
+
+    function publishQuiz() {
+        const heading = document.getElementById('quizHeading').value;
+        const time = document.getElementById('quizTime').value;
+
+        if(!heading || questions.length === 0) return alert("ഹെഡിംഗും ചോദ്യങ്ങളും നിർബന്ധമാണ്!");
+
+        db.ref('quizzes/' + mID).set({
+            heading: heading,
+            startTime: new Date(time).getTime(),
+            questions: questions,
+            status: "published"
+        }).then(() => alert("ക്വിസ് പബ്ലിഷ് ചെയ്തു!"));
+    }
+
+    function clearQuiz() {
+        if(confirm("എല്ലാ ചോദ്യങ്ങളും റിസൾട്ടും ക്ലിയർ ചെയ്യണോ?")) {
+            db.ref('quizzes/' + mID).remove();
+            db.ref('quiz_submissions/' + mID).remove();
+            location.reload();
+        }
+    }
+</script>
+
+</body>
+</html>
