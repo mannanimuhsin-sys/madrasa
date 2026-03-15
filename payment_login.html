@@ -3,62 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>പെയ്‌മെന്റ് ലോഗിൻ</title>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <title>My Payments</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         :root { --primary: #004d00; --bg: #f4f7f6; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .login-box { width: 90%; max-width: 350px; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); text-align: center; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 15px; margin: 0; }
+        .container { max-width: 500px; margin: auto; background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .user-header { background: var(--primary); color: white; padding: 20px; text-align: center; }
+        .payment-card { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .btn-receipt { background: #d4af37; color: black; border: none; padding: 8px 12px; border-radius: 5px; font-size: 12px; cursor: pointer; font-weight: bold; }
+        .status-tag { font-size: 10px; padding: 3px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase; }
+        .paid { background: #c8e6c9; color: #2e7d32; }
     </style>
 </head>
 <body>
 
-<div class="login-box">
-    <h2 style="color: var(--primary);">വിദ്യാർത്ഥി ലോഗിൻ</h2>
-    <p style="font-size: 13px; color: #666;">പെയ്‌മെന്റ് വിവരങ്ങൾ കാണാൻ ലോഗിൻ ചെയ്യുക</p>
-    <input type="number" id="regNo" placeholder="രജിസ്റ്റർ നമ്പർ">
-    <input type="password" id="pass" placeholder="പാസ്‌വേഡ്">
-    <button class="btn" onclick="login()">LOGIN</button>
+<div class="container">
+    <div class="user-header">
+        <h3 id="uName">Loading...</h3>
+        <p id="uDetails" style="margin:0; opacity:0.8; font-size:13px;"></p>
+    </div>
+
+    <div id="paymentList">
+        </div>
 </div>
 
 <script>
     const firebaseConfig = {
-        apiKey: "AIzaSyBAPJUq6ubYpALsqaT0DJi9KnLabtuaMyI",
-        authDomain: "enttemadrasa.firebaseapp.com",
-        databaseURL: "https://enttemadrasa-default-rtdb.firebaseio.com",
-        projectId: "enttemadrasa",
-        storageBucket: "enttemadrasa.firebasestorage.app",
-        appId: "1:623531881201:web:b863793340c3901cedaf50"
+        apiKey: "AIzaSyCe98Gw-si7idO0m8y5xbLLG8Z2HC3RCKE",
+        databaseURL: "https://enttemadrasa-default-rtdb.firebaseio.com"
     };
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    const rtdb = firebase.database();
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const mID = urlParams.get('id');
+    const mID = new URLSearchParams(window.location.search).get('id');
+    const reg = localStorage.getItem("loggedStudentReg");
+    const name = localStorage.getItem("loggedStudentName");
 
-    function login() {
-        const reg = document.getElementById('regNo').value;
-        const pass = document.getElementById('pass').value;
+    document.getElementById('uName').innerText = name;
+    document.getElementById('uDetails').innerText = "Reg No: " + reg;
 
-        if(!reg || !pass) return alert("വിവരങ്ങൾ നൽകുക");
+    rtdb.ref('payments/' + mID + '/' + reg).on('value', snap => {
+        const list = document.getElementById('paymentList');
+        list.innerHTML = "";
+        
+        if(!snap.exists()) {
+            list.innerHTML = "<p style='text-align:center; padding:20px;'>പെയ്‌മെന്റ് വിവരങ്ങൾ ലഭ്യമല്ല</p>";
+            return;
+        }
 
-        // ഐഡി കാർഡ് പോർട്ടലിൽ സേവ് ചെയ്തിട്ടുള്ള 'students' ലിസ്റ്റിൽ തിരയുന്നു
-        db.ref('students/' + mID).orderByChild('reg').equalTo(reg).once('value', snap => {
-            let found = false;
-            snap.forEach(child => {
-                const s = child.val();
-                if(s.pass === pass) { // ഐഡി കാർഡിന്റെ പാസ്‌വേഡ് തന്നെ ഉപയോഗിക്കുന്നു
-                    found = true;
-                    localStorage.setItem("loggedStudentReg", reg);
-                    localStorage.setItem("loggedStudentName", s.name);
-                    window.location.href = `payment_view.html?id=${mID}`;
-                }
-            });
-            if(!found) alert("രജിസ്റ്റർ നമ്പറോ പാസ്‌വേഡോ തെറ്റാണ്!");
+        snap.forEach(child => {
+            const p = child.val();
+            list.innerHTML += `
+                <div class="payment-card">
+                    <div>
+                        <b style="color:var(--primary)">${p.category}</b><br>
+                        <small style="color:#666">${p.date}</small>
+                        <span class="status-tag paid">PAID ✅</span>
+                    </div>
+                    <div style="text-align:right">
+                        <b style="font-size:18px">₹${p.amount}</b><br>
+                        <button class="btn-receipt" onclick='viewReceipt(${JSON.stringify(p)})'>RECEIPT</button>
+                    </div>
+                </div>`;
         });
+    });
+
+    function viewReceipt(data) {
+        localStorage.setItem("currentReceipt", JSON.stringify(data));
+        window.location.href = "receipt_view.html?id=" + mID;
     }
 </script>
 </body>
