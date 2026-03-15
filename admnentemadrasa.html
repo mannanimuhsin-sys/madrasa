@@ -65,56 +65,64 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    function fetchMadrasas() {
-        db.ref('madrasa_requests').on('value', (snap) => {
-            document.getElementById('loading').style.display = 'none';
-            const listArea = document.getElementById('displayList');
-            listArea.innerHTML = "";
+    // ഡാറ്റ വേഗത്തിൽ ലോഡ് ചെയ്യാൻ ഈ ഫങ്ക്ഷൻ ഉപയോഗിക്കുക
+    async function fetchMadrasas() {
+        const listArea = document.getElementById('displayList');
+        const loading = document.getElementById('loading');
 
+        // ഫയർബേസിൽ നിന്ന് ഡാറ്റ ഒരിക്കൽ മാത്രം എടുക്കുന്നു (Faster)
+        db.ref('madrasa_requests').once('value', (snap) => {
+            loading.style.display = 'none';
+            
             if (!snap.exists()) {
                 listArea.innerHTML = "<p style='text-align:center;'>മദ്രസകളൊന്നും ഇതുവരെ രജിസ്റ്റർ ചെയ്തിട്ടില്ല.</p>";
                 return;
             }
+
+            let allCards = ""; // എല്ലാ കാർഡുകളും ശേഖരിക്കാൻ ഒരു വേരിയബിൾ
 
             snap.forEach((child) => {
                 const data = child.val();
                 const id = child.key;
                 const status = data.status || 'pending';
                 
-                const card = document.createElement('div');
-                card.className = `card ${status}`;
-                card.innerHTML = `
-                    <h3>
-                        ${data.name} 
-                        <span class="status-badge" style="background:${getStatusColor(status)}">${status}</span>
-                    </h3>
-                    
-                    <div class="info-grid">
-                        <div><i class="fa fa-id-card"></i> <b>Reg:</b> ${data.reg}</div>
-                        <div><i class="fa fa-map-marker-alt"></i> <b>Place:</b> ${data.place}</div>
-                        <div><i class="fa fa-user"></i> <b>ID:</b> ${id}</div>
-                    </div>
-
-                    <div class="pass-section">
-                        <div class="pass-group">
-                            <label>Usthad Pass</label>
-                            <input type="text" id="u_${id}" value="${data.usthadPass || ''}">
+                // ഓരോ തവണയും DOM തൊടാതെ സ്ട്രിംഗിലേക്ക് ചേർക്കുന്നു
+                allCards += `
+                    <div class="card ${status}">
+                        <h3>
+                            ${data.name} 
+                            <span class="status-badge" style="background:${getStatusColor(status)}">${status}</span>
+                        </h3>
+                        
+                        <div class="info-grid">
+                            <div><i class="fa fa-id-card"></i> <b>Reg:</b> ${data.reg}</div>
+                            <div><i class="fa fa-map-marker-alt"></i> <b>Place:</b> ${data.place}</div>
+                            <div><i class="fa fa-user"></i> <b>ID:</b> ${id}</div>
                         </div>
-                        <div class="pass-group">
-                            <label>Parent Pass</label>
-                            <input type="text" id="p_${id}" value="${data.parentPass || ''}">
-                        </div>
-                        <button class="btn btn-save" onclick="updatePass('${id}')"><i class="fa fa-save"></i> പാസ്‌വേഡ് മാറ്റുക</button>
-                    </div>
 
-                    <div class="actions">
-                        <button class="btn btn-app" onclick="changeStatus('${id}', 'approved')">Approve</button>
-                        <button class="btn btn-blk" onclick="changeStatus('${id}', 'blocked')">Block</button>
-                        <button class="btn btn-del" onclick="deleteEntry('${id}')"><i class="fa fa-trash"></i> മദ്രസ ഡിലീറ്റ് ചെയ്യുക</button>
+                        <div class="pass-section">
+                            <div class="pass-group">
+                                <label>Usthad Pass</label>
+                                <input type="text" id="u_${id}" value="${data.usthadPass || ''}">
+                            </div>
+                            <div class="pass-group">
+                                <label>Parent Pass</label>
+                                <input type="text" id="p_${id}" value="${data.parentPass || ''}">
+                            </div>
+                            <button class="btn btn-save" onclick="updatePass('${id}')"><i class="fa fa-save"></i> പാസ്‌വേഡ് മാറ്റുക</button>
+                        </div>
+
+                        <div class="actions">
+                            <button class="btn btn-app" onclick="changeStatus('${id}', 'approved')">Approve</button>
+                            <button class="btn btn-blk" onclick="changeStatus('${id}', 'blocked')">Block</button>
+                            <button class="btn btn-del" onclick="deleteEntry('${id}')"><i class="fa fa-trash"></i> മദ്രസ ഡിലീറ്റ് ചെയ്യുക</button>
+                        </div>
                     </div>
                 `;
-                listArea.appendChild(card);
             });
+            
+            // അവസാനം മാത്രം ബ്രൗസറിലേക്ക് ഡാറ്റ നൽകുന്നു (Highly Efficient)
+            listArea.innerHTML = allCards;
         });
     }
 
