@@ -20,14 +20,12 @@
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 0; }
         .container { width: 100%; max-width: 500px; background: white; min-height: 100vh; margin: auto; position: relative; padding: 15px; box-sizing: border-box; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
         
-        /* പ്ലസ് ബട്ടൺ സ്റ്റൈൽ */
         .secret-trigger { position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; color: #ddd; cursor: pointer; z-index: 100; display: flex; align-items: center; justify-content: center; }
         
         .page { display: none; animation: fadeIn 0.4s; }
         .active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Profile Card Design */
         .profile-card { text-align: center; background: linear-gradient(135deg, #004d00, #002b00); color: white; padding: 30px 20px; border-radius: 20px; margin-bottom: 25px; box-shadow: 0 10px 20px rgba(0,77,0,0.2); }
         .profile-img { width: 110px; height: 110px; border-radius: 50%; border: 4px solid var(--gold); object-fit: cover; background: white; margin-bottom: 15px; }
         .m-name { font-size: 22px; font-weight: 800; margin: 0; text-transform: uppercase; color: white; }
@@ -36,9 +34,8 @@
         input { width: 100%; padding: 12px; margin: 8px 0; border: 1.5px solid #eee; border-radius: 10px; box-sizing: border-box; font-size: 15px; }
         .btn { width: 100%; padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.3s; }
         .btn-primary { background: var(--primary); color: white; }
-        .btn-dash { background: white; color: var(--primary); border: 2.5px solid var(--primary); display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 17px; margin-top: 15px; }
+        .btn-dash { background: white; color: var(--primary); border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 16px; margin-top: 12px; text-decoration: none; }
 
-        /* Title Area */
         .m-title-area { text-align: center; margin-bottom: 25px; margin-top: 30px; }
         .m-logo-img { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; margin-bottom: 15px; }
         .m-title { font-size: 28px; font-weight: 800; color: var(--primary); margin: 0; }
@@ -89,6 +86,9 @@
             <button class="btn btn-dash" id="btnDash" onclick="openDashboard()">
                 <i class="fa fa-chart-line"></i> DASHBOARD
             </button>
+            <button class="btn btn-dash" id="btnPayment" onclick="openPaymentPortal()">
+                <i class="fa fa-file-invoice-dollar"></i> PAYMENT & RECEIPTS
+            </button>
             <button class="btn btn-dash" id="btnID" onclick="openIDPortal()">
                 <i class="fa fa-id-badge"></i> ID CARD PORTAL
             </button>
@@ -96,7 +96,11 @@
                 <i class="fa fa-question-circle"></i> SPECIAL DAY QUIZ
             </button>
 
-            <div id="adminSettingsSection" style="display: none; margin-top: 15px;">
+            <div id="adminPanelSection" style="display: none; margin-top: 25px; border-top: 2px solid #eee; padding-top: 15px;">
+                <p style="text-align: center; color: #666; font-size: 12px; font-weight: bold;">ADMIN CONTROLS</p>
+                <button class="btn btn-dash" onclick="window.location.href='payment_admin.html?id='+currentId" style="background: #2e7d32; color: white; border: none;">
+                    <i class="fa fa-cash-register"></i> MANAGE PAYMENTS
+                </button>
                 <button class="btn btn-dash" onclick="window.location.href='settings.html?id='+currentId" style="background: #607d8b; color: white; border: none;">
                     <i class="fa fa-cog"></i> SETTINGS (Control Panel)
                 </button>
@@ -115,11 +119,9 @@
                 <button class="btn btn-primary" onclick="location.reload()">BACK</button>
             </div>
         </div>
-
     </div>
 
 <script>
-    // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyBAPJUq6ubYpALsqaT0DJi9KnLabtuaMyI",
         authDomain: "enttemadrasa.firebaseapp.com",
@@ -134,13 +136,12 @@
     let currentId = "";
     let currentRole = "";
 
-    // പേജ് മാറ്റാൻ
     function showPage(id) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
+        const target = document.getElementById(id);
+        if(target) target.classList.add('active');
     }
 
-    // ഫോട്ടോ പ്രിവ്യൂ
     function previewImage(input) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
@@ -152,25 +153,25 @@
         }
     }
 
-    // ലോഗിൻ ഫങ്ക്ഷൻ
+    // വേഗതയേറിയ ലോഗിൻ (Optimized Login)
     async function handleLogin() {
         const reg = document.getElementById('logReg').value.trim();
         const pass = document.getElementById('logPass').value.trim();
         const btn = document.getElementById('loginBtn');
-
         if(!reg || !pass) return alert("വിവരങ്ങൾ നൽകുക");
+        
         btn.disabled = true;
+        btn.innerText = "CHECKING...";
 
-        db.ref('madrasa_requests').once('value', snap => {
-            let foundUser = null;
+        // എല്ലാ ഡാറ്റയും വലിച്ചെടുക്കാതെ ഫിൽട്ടർ ചെയ്ത് മാത്രം എടുക്കുന്നു
+        db.ref('madrasa_requests').orderByChild('reg').equalTo(reg).once('value', snap => {
+            let foundUser = null; 
             let userId = "";
 
             snap.forEach(c => {
                 const d = c.val();
-                if(d.reg === reg) {
-                    if(d.usthadPass === pass) { foundUser = d; userId = c.key; currentRole = "admin"; }
-                    else if(d.parentPass === pass) { foundUser = d; userId = c.key; currentRole = "parent"; }
-                }
+                if(d.usthadPass === pass) { foundUser = d; userId = c.key; currentRole = "admin"; }
+                else if(d.parentPass === pass) { foundUser = d; userId = c.key; currentRole = "parent"; }
             });
 
             if(foundUser) {
@@ -183,10 +184,10 @@
                 }
             } else { alert("രജിസ്റ്റർ നമ്പറോ പാസ്‌വേഡോ തെറ്റാണ്!"); }
             btn.disabled = false;
+            btn.innerText = "LOGIN";
         });
     }
 
-    // പ്രൊഫൈൽ ലോഡിംഗും സെറ്റിംഗ്സ് കൺട്രോളും
     function loadProfile(d) {
         const img = d.photo || "https://via.placeholder.com/150";
         document.getElementById('profileArea').innerHTML = `
@@ -197,49 +198,45 @@
                 <div class="m-reg">REG NO: ${d.reg}</div>
             </div>`;
         
-        // സെറ്റിംഗ്സ് അനുസരിച്ച് ഷോ/ഹൈഡ് ബട്ടണുകൾ
+        // Settings & Payment Visibility Control
         db.ref('settings/' + currentId).on('value', snap => {
-            const s = snap.val() || { dash: true, id: true, quiz: true };
+            const s = snap.val() || { dash: true, id: true, quiz: true, payment: true };
             
-            // രക്ഷിതാക്കൾക്ക് കാണുന്ന രീതി
-            document.getElementById('btnDash').style.display = s.dash ? 'flex' : 'none';
-            document.getElementById('btnID').style.display = s.id ? 'flex' : 'none';
-            document.getElementById('btnQuiz').style.display = s.quiz ? 'flex' : 'none';
+            document.getElementById('btnDash').style.display = (s.dash !== false) ? 'flex' : 'none';
+            document.getElementById('btnID').style.display = (s.id !== false) ? 'flex' : 'none';
+            document.getElementById('btnQuiz').style.display = (s.quiz !== false) ? 'flex' : 'none';
+            document.getElementById('btnPayment').style.display = (s.payment !== false) ? 'flex' : 'none';
 
-            // ഉസ്താദ് (admin) ആണെങ്കിൽ സെറ്റിംഗ്സ് ബട്ടൺ കാണിക്കുക, ബാക്കി എല്ലാം ഓപ്പൺ ആക്കുക
             if(currentRole === 'admin') {
-                document.getElementById('adminSettingsSection').style.display = 'block';
+                document.getElementById('adminPanelSection').style.display = 'block';
+                // ഉസ്താദിന് എല്ലാ ബട്ടണുകളും എപ്പോഴും കാണിക്കും
                 document.getElementById('btnDash').style.display = 'flex';
                 document.getElementById('btnID').style.display = 'flex';
                 document.getElementById('btnQuiz').style.display = 'flex';
+                document.getElementById('btnPayment').style.display = 'flex';
             }
         });
         showPage('portalPage');
     }
 
-    // ബട്ടൺ ഫങ്ക്ഷനുകൾ (പഴയ കോഡിൽ നിന്ന്)
     function openDashboard() {
-        const baseUrl = "https://mannanimuhsin-sys.github.io/madrasa/dashbord";
-        window.location.href = `${baseUrl}?id=${currentId}&role=${currentRole}`;
+        window.location.href = `https://mannanimuhsin-sys.github.io/madrasa/dashbord?id=${currentId}&role=${currentRole}`;
     }
 
     function openIDPortal() {
-        if (currentRole === "admin") {
-            window.location.href = `https://mannanimuhsin-sys.github.io/madrasa/admin_id_portal.html?id=${currentId}`;
-        } else {
-            window.location.href = `https://mannanimuhsin-sys.github.io/madrasa/student_id.html?mid=${currentId}`;
-        }
+        const url = (currentRole === "admin") ? `https://mannanimuhsin-sys.github.io/madrasa/admin_id_portal.html?id=${currentId}` : `https://mannanimuhsin-sys.github.io/madrasa/student_id.html?mid=${currentId}`;
+        window.location.href = url;
     }
 
     function openQuizPortal() {
-        if (currentRole === "admin") {
-            window.location.href = `admin_quiz.html?id=${currentId}`;
-        } else {
-            window.location.href = `student_quiz.html?mid=${currentId}`;
-        }
+        const url = (currentRole === "admin") ? `admin_quiz.html?id=${currentId}` : `student_quiz.html?mid=${currentId}`;
+        window.location.href = url;
     }
 
-    // ഓട്ടോ ലോഗിൻ
+    function openPaymentPortal() {
+        window.location.href = `payment_view.html?id=${currentId}&role=${currentRole}`;
+    }
+
     window.onload = function() {
         const savedId = localStorage.getItem("madrasaId");
         const savedRole = localStorage.getItem("userRole");
@@ -261,8 +258,6 @@
         }
     }
 
-    
-    // രജിസ്‌ട്രേഷൻ ലോജിക് (പഴയ കോഡിൽ നിന്ന്)
     async function register() {
         const regNo = document.getElementById('rReg').value.trim();
         const uId = document.getElementById('rUser').value.trim();
@@ -285,6 +280,5 @@
         });
     }
 </script>
-
 </body>
 </html>
