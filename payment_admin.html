@@ -3,165 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>മദ്റസ പെയ്‌മെന്റ് അഡ്മിൻ</title>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <title>Payment Control Panel</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
     <style>
         :root { --primary: #004d00; --bg: #f4f7f6; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 10px; margin: 0; }
-        .box { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: var(--primary); }
-        .form-group { margin-bottom: 15px; }
-        label { font-weight: bold; font-size: 14px; display: block; margin-bottom: 5px; }
-        select, input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 15px; }
-        .btn-row { display: flex; gap: 10px; margin-top: 10px; }
-        .btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; transition: 0.3s; }
-        .btn-save { background: var(--primary); }
-        .btn-excel { background: #1d6f42; }
-        
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
-        th, td { padding: 10px; border: 1px solid #eee; text-align: left; }
-        th { background: #f4f4f4; }
-        .status-tag { padding: 3px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 15px; }
+        .admin-box { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .filter-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        select, input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .student-list-container { max-height: 400px; overflow-y: auto; border: 1px solid #eee; border-radius: 10px; padding: 10px; margin-top: 15px; }
+        .student-item { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #f9f9f9; gap: 10px; }
+        .student-item:hover { background: #f0f7f0; }
+        .btn-pay { background: var(--primary); color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        .status-badge { padding: 4px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; }
         .paid { background: #e8f5e9; color: #2e7d32; }
-        .del-btn { color: #d32f2f; cursor: pointer; border: none; background: none; }
+        .pending { background: #fff3e0; color: #ef6c00; }
     </style>
 </head>
 <body>
 
-<div class="box">
-    <button onclick="window.history.back()" style="border:none; background:none; cursor:pointer;"><i class="fa fa-arrow-left"></i> BACK</button>
-    <h2>പെയ്‌മെന്റ് മാനേജ്‌മെന്റ്</h2>
-
-    <div class="form-group">
-        <label>വിദ്യാർത്ഥി (ID Card ലിസ്റ്റിൽ നിന്ന്):</label>
-        <select id="studentSelect">
-            <option value="">വിദ്യാർത്ഥിയെ തിരഞ്ഞെടുക്കുക</option>
-        </select>
-    </div>
-
-    <div class="form-group">
-        <label>പെയ്‌മെന്റ് തരം (Category):</label>
-        <select id="payCategory">
-            <option value="Monthly Fee">പ്രതിമാസ ഫീസ് (Monthly Fee)</option>
-            <option value="Event Fund">പ്രോഗ്രാം ഫണ്ട് (Special Program)</option>
-            <option value="Admission">അഡ്മിഷൻ ഫീസ്</option>
-            <option value="Other">മറ്റുള്ളവ (Special Reason)</option>
-        </select>
-    </div>
-
-    <div class="form-group">
-        <label>തുക & വിവരണം:</label>
-        <div style="display: flex; gap: 10px;">
-            <input type="number" id="amount" placeholder="തുക">
-            <input type="text" id="remark" placeholder="മാസം/വിവരണം">
+<div class="admin-box">
+    <h2 style="color:var(--primary); text-align:center;">പെയ്‌മെന്റ് കൺട്രോൾ പാനൽ</h2>
+    
+    <div class="filter-grid">
+        <div>
+            <label>വിഭാഗം</label>
+            <select id="genderFilter" onchange="loadStudents()">
+                <option value="All">All Students</option>
+                <option value="Male">Boys</option>
+                <option value="Female">Girls</option>
+            </select>
+        </div>
+        <div>
+            <label>ക്ലാസ്സ്</label>
+            <select id="classFilter" onchange="loadStudents()">
+                <option value="All">All Classes</option>
+                <script>for(let i=1; i<=12; i++) document.write(`<option value="${i}">Class ${i}</option>`)</script>
+            </select>
+        </div>
+        <div>
+            <label>തീയതി</label>
+            <input type="date" id="payDate">
         </div>
     </div>
 
-    <div class="form-group">
-        <label>തിയ്യതി:</label>
-        <input type="date" id="payDate">
+    <input type="text" id="payReason" placeholder="എന്തിനുള്ള പെയ്‌മെന്റ്? (ഉദാ: May Month Fee)" style="margin-bottom: 10px;">
+    <input type="number" id="payAmount" placeholder="തുക (Amount)">
+
+    <div style="margin-top:20px; font-weight:bold;">വിദ്യാർത്ഥികളെ തിരഞ്ഞെടുക്കുക: 
+        <input type="checkbox" id="selectAll" onclick="toggleSelectAll()"> Select All
     </div>
 
-    <div class="btn-row">
-        <button class="btn btn-save" onclick="savePayment()"><i class="fa fa-save"></i> SAVE & NOTIFY</button>
-        <button class="btn btn-excel" onclick="downloadExcel()"><i class="fa fa-file-excel"></i> EXCEL</button>
-    </div>
+    <div class="student-list-container" id="studentList">
+        </div>
 
-    <div style="overflow-x: auto;">
-        <table id="paymentLog">
-            <thead>
-                <tr>
-                    <th>കുട്ടി</th>
-                    <th>ആവശ്യം</th>
-                    <th>തുക</th>
-                    <th>Status</th>
-                    <th>#</th>
-                </tr>
-            </thead>
-            <tbody id="logBody"></tbody>
-        </table>
-    </div>
+    <button class="btn-pay" onclick="bulkPayment()">SAVE PAYMENT DATA</button>
 </div>
 
 <script>
     const firebaseConfig = {
-        apiKey: "AIzaSyBAPJUq6ubYpALsqaT0DJi9KnLabtuaMyI",
-        authDomain: "enttemadrasa.firebaseapp.com",
-        databaseURL: "https://enttemadrasa-default-rtdb.firebaseio.com",
-        projectId: "enttemadrasa",
-        storageBucket: "enttemadrasa.firebasestorage.app",
-        appId: "1:623531881201:web:b863793340c3901cedaf50"
+        apiKey: "AIzaSyCe98Gw-si7idO0m8y5xbLLG8Z2HC3RCKE",
+        authDomain: "mum-new-id.firebaseapp.com",
+        projectId: "mum-new-id",
+        databaseURL: "https://enttemadrasa-default-rtdb.firebaseio.com"
     };
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    const fs = firebase.firestore();
+    const rtdb = firebase.database();
 
     const urlParams = new URLSearchParams(window.location.search);
     const mID = urlParams.get('id');
+    document.getElementById('payDate').valueAsDate = new Date();
 
-    // 1. വിദ്യാർത്ഥികളെ ലോഡ് ചെയ്യുന്നു
-    if(mID) {
-        db.ref('students/' + mID).on('value', snap => {
-            const sel = document.getElementById('studentSelect');
-            sel.innerHTML = '<option value="">തിരഞ്ഞെടുക്കുക</option>';
-            snap.forEach(c => {
-                const s = c.val();
-                sel.innerHTML += `<option value="${s.reg}" data-name="${s.name}">${s.reg} - ${s.name} (${s.class})</option>`;
-            });
-        });
+    async function loadStudents() {
+        const gender = document.getElementById('genderFilter').value;
+        const cls = document.getElementById('classFilter').value;
+        const listDiv = document.getElementById('studentList');
+        listDiv.innerHTML = "Loading...";
 
-        // 2. പെയ്‌മെന്റ് ലിസ്റ്റ് കാണിക്കുന്നു
-        db.ref('payments/' + mID).on('value', snap => {
-            const body = document.getElementById('logBody');
-            body.innerHTML = "";
-            snap.forEach(c => {
-                const p = c.val();
-                body.innerHTML += `<tr>
-                    <td>${p.reg}</td>
-                    <td>${p.category}<br><small>${p.remark}</small></td>
-                    <td>₹${p.amount}</td>
-                    <td><span class="status-tag paid">PAID</span></td>
-                    <td><button class="del-btn" onclick="deletePay('${c.key}')"><i class="fa fa-trash"></i></button></td>
-                </tr>`;
-            });
+        let query = fs.collection("students").where("madrasa_id", "==", mID).where("status", "==", "approved");
+
+        const snap = await query.get();
+        listDiv.innerHTML = "";
+        
+        snap.forEach(doc => {
+            const s = doc.data();
+            // Filter Logic
+            if(gender !== 'All' && s.gender !== gender) return;
+            if(cls !== 'All' && s.class != cls) return;
+
+            listDiv.innerHTML += `
+                <div class="student-item">
+                    <input type="checkbox" class="stu-checkbox" value="${s.number}" data-name="${s.name}">
+                    <div style="flex:1">
+                        <b>${s.name}</b> <br>
+                        <small>Reg: ${s.number} | Class: ${s.class} | ${s.gender}</small>
+                    </div>
+                </div>`;
         });
     }
 
-    function savePayment() {
-        const sel = document.getElementById('studentSelect');
-        const reg = sel.value;
-        const sName = sel.options[sel.selectedIndex].getAttribute('data-name');
-        const cat = document.getElementById('payCategory').value;
-        const amt = document.getElementById('amount').value;
-        const rem = document.getElementById('remark').value;
+    function toggleSelectAll() {
+        const checked = document.getElementById('selectAll').checked;
+        document.querySelectorAll('.stu-checkbox').forEach(cb => cb.checked = checked);
+    }
+
+    async function bulkPayment() {
+        const reason = document.getElementById('payReason').value;
+        const amount = document.getElementById('payAmount').value;
         const date = document.getElementById('payDate').value;
+        const selected = document.querySelectorAll('.stu-checkbox:checked');
 
-        if(!reg || !amt || !date) return alert("വിവരങ്ങൾ പൂർണ്ണമല്ല");
+        if(!reason || !amount || selected.length === 0) return alert("വിവരങ്ങൾ പൂർണ്ണമല്ല!");
 
-        const data = { reg, sName, category: cat, amount: amt, remark: rem, date, status: 'paid' };
-        db.ref('payments/' + mID).push(data).then(() => {
-            alert("പെയ്‌മെന്റ് രേഖപ്പെടുത്തി");
-            document.getElementById('amount').value = "";
-        });
+        if(confirm(`${selected.length} വിദ്യാർത്ഥികൾക്ക് പെയ്‌മെന്റ് ചേർക്കണോ?`)) {
+            for(let cb of selected) {
+                const reg = cb.value;
+                const name = cb.getAttribute('data-name');
+                const receiptId = "RCP" + Date.now() + Math.floor(Math.random() * 1000);
+
+                await rtdb.ref('payments/' + mID + '/' + reg).push({
+                    receiptId, reg, sName: name, category: reason, 
+                    amount, date, status: 'paid', timestamp: Date.now()
+                });
+            }
+            alert("വിജയകരമായി പൂർത്തിയാക്കി!");
+            location.reload();
+        }
     }
 
-    function downloadExcel() {
-        db.ref('payments/' + mID).once('value', snap => {
-            let data = [];
-            snap.forEach(c => { data.push(c.val()); });
-            const worksheet = XLSX.utils.json_to_sheet(data);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Payments");
-            XLSX.writeFile(workbook, "Madrasa_Payments.xlsx");
-        });
-    }
-
-    function deletePay(key) {
-        if(confirm("ഇത് ഒഴിവാക്കണോ?")) db.ref('payments/' + mID + '/' + key).remove();
-    }
+    loadStudents();
 </script>
 </body>
 </html>
