@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>മദ്റസ പെയ്‌മെന്റ് അഡ്മിൻ</title>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        :root { --primary: #004d00; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 10px; margin: 0; }
+        .box { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: var(--primary); }
+        .form-group { margin-bottom: 15px; }
+        label { font-weight: bold; font-size: 14px; display: block; margin-bottom: 5px; }
+        select, input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 15px; }
+        .btn-row { display: flex; gap: 10px; margin-top: 10px; }
+        .btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; transition: 0.3s; }
+        .btn-save { background: var(--primary); }
+        .btn-excel { background: #1d6f42; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
+        th, td { padding: 10px; border: 1px solid #eee; text-align: left; }
+        th { background: #f4f4f4; }
+        .status-tag { padding: 3px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; }
+        .paid { background: #e8f5e9; color: #2e7d32; }
+        .del-btn { color: #d32f2f; cursor: pointer; border: none; background: none; }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <button onclick="window.history.back()" style="border:none; background:none; cursor:pointer;"><i class="fa fa-arrow-left"></i> BACK</button>
+    <h2>പെയ്‌മെന്റ് മാനേജ്‌മെന്റ്</h2>
+
+    <div class="form-group">
+        <label>വിദ്യാർത്ഥി (ID Card ലിസ്റ്റിൽ നിന്ന്):</label>
+        <select id="studentSelect">
+            <option value="">വിദ്യാർത്ഥിയെ തിരഞ്ഞെടുക്കുക</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>പെയ്‌മെന്റ് തരം (Category):</label>
+        <select id="payCategory">
+            <option value="Monthly Fee">പ്രതിമാസ ഫീസ് (Monthly Fee)</option>
+            <option value="Event Fund">പ്രോഗ്രാം ഫണ്ട് (Special Program)</option>
+            <option value="Admission">അഡ്മിഷൻ ഫീസ്</option>
+            <option value="Other">മറ്റുള്ളവ (Special Reason)</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>തുക & വിവരണം:</label>
+        <div style="display: flex; gap: 10px;">
+            <input type="number" id="amount" placeholder="തുക">
+            <input type="text" id="remark" placeholder="മാസം/വിവരണം">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>തിയ്യതി:</label>
+        <input type="date" id="payDate">
+    </div>
+
+    <div class="btn-row">
+        <button class="btn btn-save" onclick="savePayment()"><i class="fa fa-save"></i> SAVE & NOTIFY</button>
+        <button class="btn btn-excel" onclick="downloadExcel()"><i class="fa fa-file-excel"></i> EXCEL</button>
+    </div>
+
+    <div style="overflow-x: auto;">
+        <table id="paymentLog">
+            <thead>
+                <tr>
+                    <th>കുട്ടി</th>
+                    <th>ആവശ്യം</th>
+                    <th>തുക</th>
+                    <th>Status</th>
+                    <th>#</th>
+                </tr>
+            </thead>
+            <tbody id="logBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyBAPJUq6ubYpALsqaT0DJi9KnLabtuaMyI",
+        authDomain: "enttemadrasa.firebaseapp.com",
+        databaseURL: "https://enttemadrasa-default-rtdb.firebaseio.com",
+        projectId: "enttemadrasa",
+        storageBucket: "enttemadrasa.firebasestorage.app",
+        appId: "1:623531881201:web:b863793340c3901cedaf50"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const mID = urlParams.get('id');
+
+    // 1. വിദ്യാർത്ഥികളെ ലോഡ് ചെയ്യുന്നു
+    if(mID) {
+        db.ref('students/' + mID).on('value', snap => {
+            const sel = document.getElementById('studentSelect');
+            sel.innerHTML = '<option value="">തിരഞ്ഞെടുക്കുക</option>';
+            snap.forEach(c => {
+                const s = c.val();
+                sel.innerHTML += `<option value="${s.reg}" data-name="${s.name}">${s.reg} - ${s.name} (${s.class})</option>`;
+            });
+        });
+
+        // 2. പെയ്‌മെന്റ് ലിസ്റ്റ് കാണിക്കുന്നു
+        db.ref('payments/' + mID).on('value', snap => {
+            const body = document.getElementById('logBody');
+            body.innerHTML = "";
+            snap.forEach(c => {
+                const p = c.val();
+                body.innerHTML += `<tr>
+                    <td>${p.reg}</td>
+                    <td>${p.category}<br><small>${p.remark}</small></td>
+                    <td>₹${p.amount}</td>
+                    <td><span class="status-tag paid">PAID</span></td>
+                    <td><button class="del-btn" onclick="deletePay('${c.key}')"><i class="fa fa-trash"></i></button></td>
+                </tr>`;
+            });
+        });
+    }
+
+    function savePayment() {
+        const sel = document.getElementById('studentSelect');
+        const reg = sel.value;
+        const sName = sel.options[sel.selectedIndex].getAttribute('data-name');
+        const cat = document.getElementById('payCategory').value;
+        const amt = document.getElementById('amount').value;
+        const rem = document.getElementById('remark').value;
+        const date = document.getElementById('payDate').value;
+
+        if(!reg || !amt || !date) return alert("വിവരങ്ങൾ പൂർണ്ണമല്ല");
+
+        const data = { reg, sName, category: cat, amount: amt, remark: rem, date, status: 'paid' };
+        db.ref('payments/' + mID).push(data).then(() => {
+            alert("പെയ്‌മെന്റ് രേഖപ്പെടുത്തി");
+            document.getElementById('amount').value = "";
+        });
+    }
+
+    function downloadExcel() {
+        db.ref('payments/' + mID).once('value', snap => {
+            let data = [];
+            snap.forEach(c => { data.push(c.val()); });
+            const worksheet = XLSX.utils.json_to_sheet(data);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Payments");
+            XLSX.writeFile(workbook, "Madrasa_Payments.xlsx");
+        });
+    }
+
+    function deletePay(key) {
+        if(confirm("ഇത് ഒഴിവാക്കണോ?")) db.ref('payments/' + mID + '/' + key).remove();
+    }
+</script>
+</body>
+</html>
