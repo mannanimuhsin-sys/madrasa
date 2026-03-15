@@ -245,9 +245,15 @@
         window.location.href = url;
     }
 
-    function openPaymentPortal() {
-        window.location.href = `payment_view.html?id=${currentId}&role=${currentRole}`;
+   function openPaymentPortal() {
+    if(currentRole === 'admin') {
+        // അഡ്മിൻ ആണെങ്കിൽ നേരിട്ട് അഡ്മിൻ പേജിലേക്ക്
+        window.location.href = `payment_admin.html?id=${currentId}`;
+    } else {
+        // രക്ഷിതാവാണെങ്കിൽ ആദ്യം ലോഗിൻ പേജിലേക്ക്
+        window.location.href = `payment_login.html?id=${currentId}`;
     }
+}
 
     // Auto Login on Refresh
     window.onload = function() {
