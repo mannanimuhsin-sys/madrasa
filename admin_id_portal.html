@@ -3,210 +3,217 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="pageTitle">Admin Dashboard - ID System</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <title>പെയ്‌മെന്റ് മാനേജ്‌മെന്റ്</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
     <style>
-        :root { --green: #0b5d1e; --orange: #f39c12; --red: #d63031; --blue: #2980b9; }
-        body { font-family: 'Roboto', sans-serif; background: #eef2f3; margin: 0; padding: 15px; }
-        .header { background: var(--green); color: white; padding: 20px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .action-bar { background: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        button { padding: 10px 18px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; }
-        .btn-excel { background: #27ae60; }
-        .btn-pdf { background: #e74c3c; }
-        .btn-edit { background: var(--blue); padding: 5px 10px; font-size: 11px; }
-        .btn-delete { background: var(--red); padding: 5px 10px; font-size: 11px; }
-        .btn-approve { background: #f39c12; padding: 5px 10px; font-size: 11px; }
-        .table-container { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        table { width: 100%; border-collapse: collapse; min-width: 1100px; }
-        th { background: #f8f9fa; padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6; color: var(--green); font-size: 12px; text-transform: uppercase; }
-        td { padding: 10px; border-bottom: 1px solid #eee; font-size: 13px; }
-        .stu-img { width: 40px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; }
-        .status-pending { color: var(--red); font-weight: bold; }
-        .status-approved { color: #27ae60; font-weight: bold; }
-        #editModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center; }
-        .modal-content { background:white; padding:25px; border-radius:15px; width:90%; max-width:500px; max-height:90vh; overflow-y:auto; }
-        label { display: block; margin-top: 10px; font-weight: bold; font-size: 12px; color: var(--green); }
-        input, select { width:100%; padding:10px; margin:5px 0; border:1px solid #ccc; border-radius:5px; box-sizing: border-box; }
+        :root { --primary: #004d00; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 10px; margin: 0; }
+        .box { max-width: 650px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: var(--primary); margin-top: 0; }
+        .section { border: 1px solid #eee; padding: 15px; border-radius: 10px; margin-bottom: 20px; background: #fafafa; }
+        .section-title { font-weight: bold; color: var(--primary); margin-bottom: 10px; display: block; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+        label { font-weight: bold; font-size: 13px; display: block; margin-top: 10px; }
+        select, input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; margin-top: 5px; }
+        .btn-row { display: flex; gap: 10px; margin-top: 15px; }
+        .btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-save { background: var(--primary); }
+        .btn-excel { background: #1d6f42; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; background: white; }
+        th, td { padding: 10px; border: 1px solid #eee; text-align: left; }
+        th { background: #f4f4f4; color: var(--primary); }
+        .status-paid { background: #e8f5e9; color: #2e7d32; padding: 3px 7px; border-radius: 4px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <div>
-        <h2 style="margin:0;" id="adminMName">ADMIN DASHBOARD</h2>
-        <small id="adminMPlace">Loading Madrasa Details...</small>
+<div class="box">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <button onclick="window.history.back()" style="border:none; background:none; cursor:pointer; font-weight:bold; color:var(--primary);"><i class="fa fa-arrow-left"></i> BACK</button>
+        <button class="btn btn-excel" onclick="downloadExcel()" style="padding: 5px 15px; font-size: 12px; flex:none;"><i class="fa fa-file-excel"></i> Excel Download</button>
     </div>
-    <div id="stats" style="font-weight: bold; font-size: 18px;">Total: 0</div>
-</div>
 
-<div class="action-bar">
-    <input type="text" id="search" placeholder="Search name, ID, or phone..." onkeyup="applyFilters()" style="flex:2; min-width:200px; padding:10px; border-radius:8px; border:1px solid #ddd;">
-    <select id="classFilter" onchange="applyFilters()" style="padding:10px; border-radius:8px; flex:1;">
-        <option value="All">All Classes</option>
-        <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
-        <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
-    </select>
-    <button class="btn-excel" onclick="exportToExcel()">EXCEL</button>
-    <button class="btn-pdf" onclick="exportToPDF()">PDF</button>
-    <button style="background:#555" onclick="location.reload()">REFRESH</button>
-</div>
+    <h2>മദ്റസ പെയ്‌മെന്റ് പാനൽ</h2>
 
-<div class="table-container" style="overflow-x:auto;">
-    <table>
-        <thead>
-            <tr>
-                <th>Photo</th>
-                <th>Reg.No</th>
-                <th>Name</th>
-                <th>Class</th>
-                <th>Father</th>
-                <th>Phone</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody id="studentBody"></tbody>
-    </table>
+    <div class="section">
+        <span class="section-title">വിദ്യാർത്ഥികളെ തിരഞ്ഞെടുക്കുക</span>
+        <div style="display: flex; gap: 10px;">
+            <div style="flex: 1;">
+                <label>ക്ലാസ്സ്</label>
+                <select id="classFilter" onchange="loadStudentsByClass()">
+                    <option value="">ക്ലാസ്സ് തിരഞ്ഞെടുക്കുക</option>
+                    <option value="All">മൊത്തം കുട്ടികൾ (All Students)</option>
+                    <option value="1">ക്ലാസ്സ് 1</option><option value="2">ക്ലാസ്സ് 2</option>
+                    <option value="3">ക്ലാസ്സ് 3</option><option value="4">ക്ലാസ്സ് 4</option>
+                    <option value="5">ക്ലാസ്സ് 5</option><option value="6">ക്ലാസ്സ് 6</option>
+                    <option value="7">ക്ലാസ്സ് 7</option><option value="8">ക്ലാസ്സ് 8</option>
+                    <option value="9">ക്ലാസ്സ് 9</option><option value="10">ക്ലാസ്സ് 10</option>
+                </select>
+            </div>
+            <div style="flex: 2;">
+                <label>വിദ്യാർത്ഥി (ഒരാൾക്ക് മാത്രമെങ്കിൽ)</label>
+                <select id="studentSelect">
+                    <option value="All">ക്ലാസ്സിലെ എല്ലാവരും</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <span class="section-title">പെയ്‌മെന്റ് വിവരങ്ങൾ</span>
+        <label>എന്ത് പ്രോഗ്രാം / എന്തിനുള്ള പെയ്‌മെന്റ്?</label>
+        <input type="text" id="payReason" placeholder="ഉദാഹരണത്തിന്: May Month Fees, പ്രോഗ്രാം ഫണ്ട്...">
+
+        <div style="display: flex; gap: 10px;">
+            <div style="flex: 1;">
+                <label>തുക (Amount)</label>
+                <input type="number" id="amount" placeholder="0.00">
+            </div>
+            <div style="flex: 1;">
+                <label>തിയ്യതി</label>
+                <input type="date" id="payDate">
+            </div>
+        </div>
+        
+        <button class="btn btn-save" style="margin-top: 15px; width: 100%;" onclick="savePayment()">
+            <i class="fa fa-check-circle"></i> SAVE PAYMENT
+        </button>
+    </div>
+
+    <div style="overflow-x: auto;">
+        <table id="paymentLog">
+            <thead>
+                <tr>
+                    <th>Reg.No</th>
+                    <th>വിദ്യാർത്ഥി</th>
+                    <th>വിഷയം</th>
+                    <th>തുക</th>
+                    <th>തിയ്യതി</th>
+                </tr>
+            </thead>
+            <tbody id="logBody"></tbody>
+        </table>
+    </div>
 </div>
 
 <script>
-// Firebase configuration (നിങ്ങളുടെ പഴയ കോഡിലുള്ളത് തന്നെ)
-const firebaseConfig = {
-    apiKey: "AIzaSyCe98Gw-si7idO0m8y5xbLLG8Z2HC3RCKE",
-    authDomain: "mum-new-id.firebaseapp.com",
-    projectId: "mum-new-id",
-    storageBucket: "mum-new-id.firebasestorage.app",
-    messagingSenderId: "794343464244",
-    appId: "1:794343464244:web:f9083036490e3609bf1961",
-    databaseURL: "https://enttemadrasa-default-rtdb.firebaseio.com"
-};
+    // Firebase Configuration (ID Card-ൽ ഉപയോഗിച്ച അതേ Config)
+    const firebaseConfig = {
+        apiKey: "AIzaSyCe98Gw-si7idO0m8y5xbLLG8Z2HC3RCKE",
+        authDomain: "mum-new-id.firebaseapp.com",
+        projectId: "mum-new-id",
+        storageBucket: "mum-new-id.firebasestorage.app",
+        messagingSenderId: "794343464244",
+        appId: "1:794343464244:web:f9083036490e3609bf1961",
+        databaseURL: "https://enttemadrasa-default-rtdb.firebaseio.com"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const fs = firebase.firestore(); // Firestore for Student List
+    const rtdb = firebase.database(); // RTDB for Payments
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const rtdb = firebase.database();
+    const urlParams = new URLSearchParams(window.location.search);
+    const mID = urlParams.get('id') || urlParams.get('mid');
+    let currentClassStudents = [];
 
-const urlParams = new URLSearchParams(window.location.search);
-// 'mid' അല്ലെങ്കിൽ 'id' ഏത് വന്നാലും വർക്ക് ആകും
-const adminMId = urlParams.get('mid') || urlParams.get('id'); 
-let allStudents = [];
-let madrasaName = "Madrasa";
+    // ഇന്ന് പെയ്‌മെന്റ് നൽകുന്ന ദിവസം ഡിഫോൾട്ടായി നൽകുന്നു
+    document.getElementById('payDate').valueAsDate = new Date();
 
-async function loadMadrasa() {
-    if(!adminMId) {
-        alert("Madrasa ID Missing in URL!");
-        return;
-    }
-    rtdb.ref('madrasa_requests/' + adminMId).once('value', snap => {
-        const d = snap.val();
-        if(d) {
-            madrasaName = d.name;
-            document.getElementById('adminMName').innerText = d.name.toUpperCase();
-            document.getElementById('adminMPlace').innerText = d.place + " | Admin Panel";
-            loadData();
-        } else {
-            document.getElementById('adminMPlace').innerText = "Madrasa Not Found!";
+    // 1. ക്ലാസ്സ് മാറുമ്പോൾ ആ ക്ലാസ്സിലെ കുട്ടികളെ ലോഡ് ചെയ്യുന്നു
+    async function loadStudentsByClass() {
+        const classVal = document.getElementById('classFilter').value;
+        const stuSel = document.getElementById('studentSelect');
+        stuSel.innerHTML = '<option value="All">ക്ലാസ്സിലെ എല്ലാവരും</option>';
+        currentClassStudents = [];
+
+        if(!classVal || !mID) return;
+
+        let query = fs.collection("students").where("madrasa_id", "==", mID);
+        if(classVal !== "All") {
+            query = query.where("class", "==", classVal);
         }
-    });
-}
 
-async function loadData() {
-    const tbody = document.getElementById('studentBody');
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Loading Students...</td></tr>';
-
-    try {
-        // ഇൻഡക്സ് എറർ ഒഴിവാക്കാൻ orderBy ഒഴിവാക്കി ലളിതമാക്കി
-        const snapshot = await db.collection("students")
-                           .where("madrasa_id", "==", adminMId)
-                           .get();
-        
-        allStudents = [];
+        const snapshot = await query.get();
         snapshot.forEach(doc => {
-            allStudents.push({ ...doc.data(), docId: doc.id });
+            const s = doc.data();
+            currentClassStudents.push({ id: doc.id, ...s });
+            stuSel.innerHTML += `<option value="${s.number}" data-name="${s.name}">${s.number} - ${s.name}</option>`;
         });
-        
-        // ക്ലയന്റ് സൈഡിൽ വെച്ച് സമയം അനുസരിച്ച് സോർട്ട് ചെയ്യുന്നു
-        allStudents.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-        
-        applyFilters();
-    } catch (e) { 
-        console.error("Firestore Error:", e);
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:red;">Error: ${e.message}</td></tr>`;
-    }
-}
-
-function applyFilters() {
-    const classVal = document.getElementById('classFilter').value;
-    const searchVal = document.getElementById('search').value.toLowerCase();
-    
-    const filtered = allStudents.filter(s => {
-        const matchClass = (classVal === "All" || s.class == classVal);
-        const matchSearch = (s.name.toLowerCase().includes(searchVal) || s.number.includes(searchVal));
-        return matchClass && matchSearch;
-    });
-
-    renderTable(filtered);
-}
-
-function renderTable(data) {
-    const tbody = document.getElementById('studentBody');
-    tbody.innerHTML = '';
-    
-    if(data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No students found for this Madrasa.</td></tr>';
     }
 
-    data.forEach(s => {
-        const isApproved = s.status === "approved";
-        tbody.innerHTML += `
-            <tr>
-                <td><img src="${s.photo}" class="stu-img"></td>
-                <td><b>${s.number}</b></td>
-                <td>${s.name}</td>
-                <td>${s.class}</td>
-                <td>${s.father}</td>
-                <td>${s.phone}</td>
-                <td><span class="${isApproved ? 'status-approved' : 'status-pending'}">${isApproved ? 'Approved ✅' : 'Pending ⏳'}</span></td>
-                <td>
-                    <div style="display:flex; gap:5px;">
-                        ${!isApproved ? `<button class="btn-approve" onclick="approveStudent('${s.docId}')">Approve</button>` : ''}
-                        <button class="btn-delete" onclick="deleteData('${s.docId}')">Del</button>
-                    </div>
-                </td>
-            </tr>
-        `;
-    });
-    document.getElementById('stats').innerText = `Total: ${data.length}`;
-}
+    // 2. പെയ്‌മെന്റ് സേവ് ചെയ്യുന്നു
+    async function savePayment() {
+        const studentType = document.getElementById('studentSelect').value;
+        const reason = document.getElementById('payReason').value;
+        const amt = document.getElementById('amount').value;
+        const date = document.getElementById('payDate').value;
 
-async function approveStudent(id) {
-    if(confirm("Approve this student?")) {
-        try {
-            await db.collection("students").doc(id).update({ status: "approved" });
-            loadData();
-        } catch(e) { alert("Update failed!"); }
+        if(!reason || !amt || !date) return alert("വിവരങ്ങൾ പൂർണ്ണമല്ല!");
+
+        if(studentType === "All") {
+            if(currentClassStudents.length === 0) return alert("തിരഞ്ഞെടുത്ത ക്ലാസ്സിൽ വിദ്യാർത്ഥികൾ ഇല്ല!");
+            if(confirm(`${currentClassStudents.length} കുട്ടികൾക്ക് ഒന്നിച്ച് പെയ്‌മെന്റ് ചേർക്കണോ?`)) {
+                for(let s of currentClassStudents) {
+                    await pushToDB(s.number, s.name, reason, amt, date);
+                }
+                alert("എല്ലാവർക്കും പെയ്‌മെന്റ് ചേർത്തു.");
+            }
+        } else {
+            const sel = document.getElementById('studentSelect');
+            const sName = sel.options[sel.selectedIndex].getAttribute('data-name');
+            await pushToDB(studentType, sName, reason, amt, date);
+            alert("പെയ്‌മെന്റ് രേഖപ്പെടുത്തി.");
+        }
+        loadPaymentLogs();
     }
-}
 
-async function deleteData(id) {
-    if(confirm("Delete this student?")) {
-        try {
-            await db.collection("students").doc(id).delete();
-            loadData();
-        } catch(e) { alert("Delete failed!"); }
+    function pushToDB(reg, name, cat, amount, date) {
+        return rtdb.ref('payments/' + mID).push({
+            reg: reg,
+            sName: name,
+            category: cat,
+            amount: amount,
+            date: date,
+            status: 'paid',
+            timestamp: Date.now()
+        });
     }
-}
 
-// തുടക്കത്തിൽ ഡാറ്റ ലോഡ് ചെയ്യുന്നു
-loadMadrasa();
+    // 3. പെയ്‌മെന്റ് ലിസ്റ്റ് കാണിക്കുന്നു
+    function loadPaymentLogs() {
+        if(!mID) return;
+        rtdb.ref('payments/' + mID).limitToLast(20).on('value', snap => {
+            const body = document.getElementById('logBody');
+            body.innerHTML = "";
+            let rows = [];
+            snap.forEach(c => { rows.push(c.val()); });
+            rows.reverse().forEach(p => {
+                body.innerHTML += `<tr>
+                    <td>${p.reg}</td>
+                    <td>${p.sName}</td>
+                    <td>${p.category}</td>
+                    <td>₹${p.amount}</td>
+                    <td><span class="status-paid">${p.date}</span></td>
+                </tr>`;
+            });
+        });
+    }
+
+    function downloadExcel() {
+        rtdb.ref('payments/' + mID).once('value', snap => {
+            let data = [];
+            snap.forEach(c => { data.push(c.val()); });
+            const worksheet = XLSX.utils.json_to_sheet(data);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Payments");
+            XLSX.writeFile(workbook, "Madrasa_Payments_Report.xlsx");
+        });
+    }
+
+    loadPaymentLogs();
 </script>
 </body>
 </html>
