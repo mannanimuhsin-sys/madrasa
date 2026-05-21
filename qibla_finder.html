@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+<meta charset="UTF-8" />
+<!-- Strictly lock mobile viewport scaling and zooming -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0"/>
+
+<title>Qibla Finder - Immersive</title>
+
+<!-- Font Awesome for sleek modern icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+<!-- Google Fonts for Outfit modern typography -->
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Outfit', sans-serif;
+-webkit-tap-highlight-color: transparent;
+}
+
+body, html {
+width: 100%;
+height: 100%;
+margin: 0;
+padding: 0;
+overflow: hidden;
+color: white;
+user-select: none;
+-webkit-user-select: none;
+/* Completely lock page touch actions to prevent wiggling and pinch zooming */
+touch-action: none;
+background: #0d1e15;
+}
+
+/* Full Screen Panoramic Viewport */
+.viewfinder-container {
+position: absolute;
+inset: 0;
+width: 100%;
+height: 100%;
+background: radial-gradient(circle at center, #7bd1f9 0%, #3ca8ec 100%);
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: space-between;
+padding: 30px 20px;
+z-index: 2;
+overflow: hidden;
+touch-action: none;
+}
+
+/* Camera Stream Overlay */
+#camera-stream {
+position: absolute;
+inset: 0;
+width: 100%;
+height: 100%;
+object-fit: cover;
+z-index: 1;
+display: none;
+pointer-events: none;
+}
+
+/* Horizon line */
+.horizon-line {
+position: absolute;
+top: 55%;
+left: 0;
+width: 100%;
+height: 2px;
+background: rgba(255,255,255,0.3);
+z-index: 5;
+box-shadow: 0 0 10px rgba(255,255,255,0.2);
+}
+
+/* Scrolling Horizon tick ruler */
+.horizon-ticks {
+position: absolute;
+top: 55%;
+left: 50%;
+height: 35px;
+width: 3600px;
+transform: translate3d(-50%, -100%, 0);
+display: flex;
+align-items: flex-end;
+justify-content: center;
+gap: 10px;
+z-index: 4;
+opacity: 0.6;
+will-change: transform;
+pointer-events: none;
+}
+
+.tick-mark {
+width: 2px;
+height: 12px;
+background: white;
+}
+.tick-mark.major {
+height: 24px;
+width: 3px;
+background: #ffd700;
+position: relative;
+}
+.tick-mark.major::after {
+content: attr(data-deg);
+position: absolute;
+top: -20px;
+left: 50%;
+transform: translateX(-50%);
+font-size: 10px;
+font-weight: 700;
+color: white;
+}
+
+/* IMMERSIVE COMPASS HUD TARGET */
+.hud-target {
+position: absolute;
+top: 55%;
+left: 50%;
+transform: translate(-50%, -50%);
+width: 170px;
+height: 170px;
+border: 2px dashed rgba(255, 255, 255, 0.4);
+border-radius: 50%;
+z-index: 6;
+pointer-events: none;
+display: flex;
+align-items: center;
+justify-content: center;
+transition: border-color 0.4s, transform 0.4s;
+}
+
+.hud-target.aligned {
+border-color: #0aff8d;
+border-style: solid;
+box-shadow: 0 0 30px rgba(10, 255, 141, 0.4);
+transform: translate(-50%, -50%) scale(1.08);
+}
+
+.hud-target::after {
+content: '';
+position: absolute;
+width: 12px;
+height: 12px;
+border-radius: 50%;
+background: rgba(255,255,255,0.6);
+}
+.hud-target.aligned::after {
+background: #0aff8d;
+box-shadow: 0 0 10px #0aff8d;
+}
+
+/* FLOATING QIBLA PIN */
+.qibla-pin {
+position: absolute;
+top: 55%;
+left: 50%;
+transform: translate3d(-50%, -100%, 0);
+display: flex;
+flex-direction: column;
+align-items: center;
+z-index: 10;
+will-change: transform, opacity;
+opacity: 0;
+pointer-events: none;
+transition: opacity 0.4s ease;
+}
+
+.pin-bubble {
+width: 120px;
+height: 120px;
+background: #0084ff;
+border-radius: 50% 50% 50% 0;
+transform: rotate(-45deg);
+display: flex;
+align-items: center;
+justify-content: center;
+box-shadow: 0 12px 35px rgba(0, 132, 255, 0.45);
+border: 4px solid #ffffff;
+transition: background 0.4s ease, box-shadow 0.4s ease;
+animation: floatPin 2.2s infinite alternate ease-in-out;
+}
+
+.viewfinder-container.aligned .pin-bubble {
+background: #0aff8d;
+box-shadow: 0 12px 40px rgba(10, 255, 141, 0.6);
+}
+
+.kaaba-container {
+transform: rotate(45deg);
+width: 80px;
+height: 80px;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+
+/* Kaaba SVG Vector */
+.kaaba-icon {
+width: 100%;
+height: 100%;
+filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+}
+
+.pin-shadow {
+width: 25px;
+height: 6px;
+background: rgba(0,0,0,0.25);
+border-radius: 50%;
+margin-top: 10px;
+filter: blur(1.5px);
+animation: floatShadow 2.2s infinite alternate ease-in-out;
+}
+
+@keyframes floatPin {
+0% { transform: rotate(-45deg) translate(0, 0); }
+100% { transform: rotate(-45deg) translate(-6px, -6px); }
+}
+
+@keyframes floatShadow {
+0% { transform: scale(1); opacity: 0.6; }
+100% { transform: scale(0.7); opacity: 0.25; }
+}
+
+/* Top controls */
+.top-controls {
+width: 100%;
+display: flex;
+justify-content: space-between;
+align-items: center;
+z-index: 12;
+}
+
+.circle-btn {
+width: 48px;
+height: 48px;
+border-radius: 50%;
+background: rgba(255,255,255,0.15);
+backdrop-filter: blur(10px);
+-webkit-backdrop-filter: blur(10px);
+border: 1px solid rgba(255,255,255,0.25);
+display: flex;
+align-items: center;
+justify-content: center;
+color: white;
+font-size: 20px;
+cursor: pointer;
+transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.circle-btn:active {
+transform: scale(0.9);
+}
+
+.circle-btn.active {
+background: #0084ff;
+border-color: #0084ff;
+box-shadow: 0 0 15px rgba(0, 132, 255, 0.5);
+color: white;
+}
+
+.lang-switch {
+background: rgba(255,255,255,0.15);
+backdrop-filter: blur(10px);
+-webkit-backdrop-filter: blur(10px);
+border: 1px solid rgba(255,255,255,0.25);
+padding: 8px 18px;
+border-radius: 25px;
+font-size: 13px;
+font-weight: 700;
+cursor: pointer;
+color: white;
+box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+transition: 0.3s;
+}
+
+/* HUD Texts */
+.text-hud {
+text-align: center;
+z-index: 12;
+max-width: 90%;
+margin-top: 20px;
+}
+
+.text-hud h1 {
+font-size: 26px;
+font-weight: 800;
+text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+margin-bottom: 6px;
+line-height: 1.25;
+transition: color 0.3s;
+}
+
+.text-hud p {
+font-size: 13px;
+font-weight: 600;
+opacity: 0.85;
+text-shadow: 0 1px 6px rgba(0,0,0,0.2);
+}
+
+/* Guide arrows */
+.guide-arrow {
+position: absolute;
+top: 55%;
+transform: translateY(-50%);
+font-size: 38px;
+color: white;
+z-index: 10;
+display: none;
+animation: arrowPulse 0.8s infinite alternate ease-in-out;
+text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+pointer-events: none;
+}
+
+#guide-left { left: 20px; }
+#guide-right { right: 20px; }
+
+@keyframes arrowPulse {
+0% { transform: translateY(-50%) scale(1); opacity: 0.4; }
+100% { transform: translateY(-50%) scale(1.2); opacity: 0.9; }
+}
+
+.guide-arrow.active {
+display: block;
+}
+
+/* Google style bottom panel */
+.bottom-panel {
+width: 100%;
+max-width: 400px;
+background: rgba(255, 255, 255, 0.12);
+backdrop-filter: blur(25px);
+-webkit-backdrop-filter: blur(25px);
+border: 1px solid rgba(255, 255, 255, 0.2);
+border-radius: 28px;
+padding: 16px;
+display: flex;
+flex-direction: column;
+align-items: center;
+z-index: 12;
+box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+}
+
+.hold-flat-hint {
+font-size: 11px;
+font-weight: 600;
+opacity: 0.8;
+margin-bottom: 12px;
+display: flex;
+align-items: center;
+gap: 5px;
+}
+
+.share-wrap {
+display: flex;
+gap: 15px;
+justify-content: center;
+width: 100%;
+}
+
+.share-btn {
+width: 46px;
+height: 46px;
+border-radius: 50%;
+background: rgba(255,255,255,0.2);
+border: 1px solid rgba(255,255,255,0.15);
+display: flex;
+align-items: center;
+justify-content: center;
+color: white;
+font-size: 16px;
+cursor: pointer;
+transition: all 0.25s;
+}
+
+.share-btn:hover {
+background: white;
+color: #0084ff;
+transform: translateY(-3px);
+box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+/* Fallback slider */
+.manual-wrap {
+width: 100%;
+background: rgba(255,255,255,0.06);
+border-radius: 16px;
+padding: 10px 14px;
+margin-top: 10px;
+display: none;
+text-align: center;
+}
+
+.manual-wrap p {
+font-size: 10px;
+color: #ffd700;
+font-weight: 600;
+margin-bottom: 5px;
+}
+
+input[type="range"] {
+-webkit-appearance: none;
+appearance: none;
+width: 100%;
+background: rgba(255,255,255,0.1);
+height: 4px;
+border-radius: 2px;
+margin-top: 5px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+-webkit-appearance: none;
+appearance: none;
+width: 14px;
+height: 14px;
+border-radius: 50%;
+background: #ffd700;
+cursor: pointer;
+box-shadow: 0 0 5px rgba(255,215,0,0.8);
+}
+
+/* TAP TO START ONE-CLICK OVERLAY */
+.tap-start-overlay {
+position: absolute;
+inset: 0;
+width: 100%;
+height: 100%;
+background: rgba(13, 30, 21, 0.85);
+backdrop-filter: blur(15px);
+-webkit-backdrop-filter: blur(15px);
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+z-index: 100;
+transition: opacity 0.5s ease, visibility 0.5s;
+text-align: center;
+padding: 20px;
+cursor: pointer;
+}
+
+.tap-start-overlay.hidden {
+opacity: 0;
+visibility: hidden;
+pointer-events: none;
+}
+
+.tap-icon-pulse {
+font-size: 56px;
+color: #ffd700;
+margin-bottom: 25px;
+animation: tapPulse 1.4s infinite alternate ease-in-out;
+text-shadow: 0 0 15px rgba(255,215,0,0.4);
+}
+
+@keyframes tapPulse {
+0% { transform: scale(0.9) translateY(0); opacity: 0.6; }
+100% { transform: scale(1.1) translateY(-10px); opacity: 1; }
+}
+
+.tap-text {
+font-size: 18px;
+font-weight: 700;
+color: #e3f2ea;
+line-height: 1.5;
+max-width: 280px;
+}
+
+/* Toast */
+.toast {
+position: fixed;
+top: 20px;
+left: 50%;
+transform: translate(-50%, -100px);
+background: linear-gradient(135deg, #ffd700, #d4af37);
+color: #012413;
+font-weight: 700;
+padding: 12px 24px;
+border-radius: 20px;
+font-size: 13px;
+z-index: 200;
+box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+pointer-events: none;
+display: flex;
+align-items: center;
+gap: 8px;
+}
+
+.toast.active {
+transform: translate(-50%, 0);
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- Tap to start one-click overlay (iOS orientation permission click requirement) -->
+<div class="tap-start-overlay" id="tap-overlay" onclick="handleTapToStart()">
+<i class="fa-solid fa-hand-pointer tap-icon-pulse"></i>
+<div class="tap-text" id="tap-text">തുടങ്ങാൻ സ്ക്രീനിൽ തൊടുക 👆</div>
+</div>
+
+<!-- Immersive camera view overlay -->
+<video id="camera-stream" autoplay playsinline></video>
+
+<!-- FULLSCREEN VIEWPORT COMPASS HUD -->
+<div class="viewfinder-container" id="hud-viewfinder">
+
+<!-- Horizon Line & Ticks -->
+<div class="horizon-line"></div>
+<div class="horizon-ticks" id="horizon-ticks"></div>
+
+<!-- Floating Map Pin with Vector Kaaba -->
+<div class="qibla-pin" id="qibla-pin">
+<div class="pin-bubble">
+<div class="kaaba-container">
+<!-- Vector Kaaba Cube -->
+<svg class="kaaba-icon" viewBox="0 0 100 120">
+<path d="M50,25 L85,38 L85,82 L50,69 Z" fill="#2c3e50" />
+<path d="M50,25 L15,38 L15,82 L50,69 Z" fill="#1a252f" />
+<path d="M50,25 L85,38 L50,50 L15,38 Z" fill="#34495e" stroke="#52708e" stroke-width="1" />
+<path d="M15,48 L50,38 L50,42 L15,52 Z" fill="#d4af37" />
+<path d="M50,38 L85,48 L85,52 L50,42 Z" fill="#d4af37" />
+<path d="M25,58 L37,55 L37,76 L25,79 Z" fill="#d4af37" />
+<line x1="31" y1="56" x2="31" y2="77" stroke="#997818" stroke-width="0.8"/>
+</svg>
+</div>
+</div>
+<div class="pin-shadow"></div>
+</div>
+
+<!-- HUD target outline overlay -->
+<div class="hud-target" id="hud-target"></div>
+
+<!-- Panoramic Guidance Indicators -->
+<div class="guide-arrow" id="guide-left"><i class="fa-solid fa-chevron-left"></i></div>
+<div class="guide-arrow" id="guide-right"><i class="fa-solid fa-chevron-right"></i></div>
+
+<!-- Top Control Headers -->
+<div class="top-controls">
+<div class="circle-btn" onclick="window.location.href='index.html'"><i class="fa-solid fa-house"></i></div>
+<button class="lang-switch" id="lang-btn" onclick="toggleLanguage()">English</button>
+<div class="circle-btn" id="camera-toggle" onclick="toggleCamera()"><i class="fa-solid fa-camera"></i></div>
+</div>
+
+<!-- Dynamic Compass Alignment Text -->
+<div class="text-hud">
+<h1 id="heading-h1">കണക്ട് ചെയ്യുന്നു...</h1>
+<p id="sub-p">Finding Qibla Direction...</p>
+</div>
+
+<!-- Immersive bottom hud options -->
+<div class="bottom-panel">
+<div class="hold-flat-hint" id="flat-hint">
+<i class="fa-solid fa-mobile-screen-button"></i>
+<span id="flat-hint-text">കൃത്യമായ ദിശയ്ക്ക് ഫോൺ കൈയിൽ നേരെ പരത്തിപ്പിടിക്കുക.</span>
+</div>
+
+<div class="share-wrap">
+<div class="share-btn" onclick="shareWhatsApp()"><i class="fa-brands fa-whatsapp"></i></div>
+<div class="share-btn" onclick="shareFacebook()"><i class="fa-brands fa-facebook-f"></i></div>
+<div class="share-btn" onclick="shareTwitter()"><i class="fa-brands fa-twitter"></i></div>
+<div class="share-btn" onclick="copyLink()"><i class="fa-solid fa-link"></i></div>
+</div>
+
+<!-- Fallback slider for Manual Calibration mode -->
+<div class="manual-wrap" id="manual-controls">
+<p id="manual-label">Desktop Simulation: Slide to rotate compass</p>
+<input type="range" id="manual-slider" min="0" max="359" value="0" oninput="onSliderChange(this.value)">
+</div>
+</div>
+
+</div>
+
+<script>
+// Kaaba Coordinates
+const kaabaLat = 21.4225;
+const kaabaLng = 39.8262;
+
+// Initial Coordinates & State Variables
+let userLat = 11.0720; // Default Malappuram Kerala
+let userLng = 76.0740;
+let distanceToKaaba = 4082;
+let qiblaAngle = 292.4; 
+let currentHeading = 0;
+let hasSensor = false;
+let isAbsoluteMode = false;
+let wasAligned = false;
+let isCameraActive = false;
+let currentLanguage = 'ml'; // Default Malayalam for Madrasa
+let orientationInitAttempted = false;
+
+// Natural translations variables
+const langTexts = {
+    ml: {
+        title: "ഖിബ്‌ല ഫൈൻഡർ",
+        tapStart: "തുടങ്ങാൻ സ്ക്രീനിൽ തൊടുക 👆",
+        facingQibla: "നിങ്ങൾ ഖിബ്‌ലയ്ക്ക് അഭിമുഖമാണ്",
+        distanceText: "കഅബ ഈ ദിശയിൽ {dist} കി.മീ അകലെയാണ്.",
+        turnLeft: "◀ ഇടത്തോട്ട് തിരിയുക ({deg}°)",
+        turnRight: "വലത്തോട്ട് തിരിയുക ▶ ({deg}°)",
+        holdFlat: "കൃത്യമായ ദിശയ്ക്ക് ഫോൺ കൈയിൽ നേരെ പരത്തിപ്പിടിക്കുക.",
+        desktopSim: "ലാപ്‌ടോപ്പ് സിമുലേഷൻ: റൊട്ടേറ്റ് ചെയ്യാൻ സ്ലൈഡർ തിരിക്കുക"
+    },
+    en: {
+        title: "Qibla Finder",
+        tapStart: "Tap anywhere to start 👆",
+        facingQibla: "You're facing the Qibla",
+        distanceText: "Kaaba is {dist} km in this direction.",
+        turnLeft: "◀ Turn Left ({deg}°)",
+        turnRight: "Turn Right ▶ ({deg}°)",
+        holdFlat: "Hold phone flat for accurate direction.",
+        desktopSim: "Desktop Simulation: Slide to rotate compass"
+    }
+};
+
+// Strictly prevent double-tap to zoom in Javascript to keep screen static
+document.addEventListener('touchstart', (e) => {
+    if (e.touches.length > 1) {
+        e.preventDefault();
+    }
+}, { passive: false });
+
+let lastTouchEnd = 0;
+document.addEventListener('touchend', (e) => {
+    const now = (new Date()).getTime();
+    if (now - lastTouchEnd <= 300) {
+        e.preventDefault();
+    }
+    lastTouchEnd = now;
+}, false);
+
+function toRadians(deg){ return deg * Math.PI / 180; }
+function toDegrees(rad){ return rad * 180 / Math.PI; }
+
+function calculateQibla(lat, lng){
+    const uLat = toRadians(lat);
+    const uLng = toRadians(lng);
+    const kLat = toRadians(kaabaLat);
+    const kLng = toRadians(kaabaLng);
+    const lngDiff = kLng - uLng;
+
+    const y = Math.sin(lngDiff);
+    const x = Math.cos(uLat) * Math.tan(kLat) - Math.sin(uLat) * Math.cos(lngDiff);
+    let direction = toDegrees(Math.atan2(y, x));
+    return (direction + 360) % 360;
+}
+
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; 
+    const dLat = toRadians(lat2 - lat1);
+    const dLon = toRadians(lon2 - lon1);
+    const a = 
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * 
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
+function generateHorizonTicks() {
+    const ticksWrap = document.getElementById("horizon-ticks");
+    ticksWrap.innerHTML = "";
+    for (let i = 0; i < 360; i += 5) {
+        const tick = document.createElement("div");
+        if (i % 30 === 0) {
+            tick.className = "tick-mark major";
+            tick.setAttribute("data-deg", i + "°");
+        } else {
+            tick.className = "tick-mark";
+        }
+        ticksWrap.appendChild(tick);
+    }
+}
+
+// Synthesize nice harmonic chime
+let audioCtx = null;
+function playChime() {
+    try {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+        osc.frequency.exponentialRampToValueAtTime(783.99, audioCtx.currentTime + 0.18); // G5
+        gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.7);
+
+        osc.start(audioCtx.currentTime);
+        osc.stop(audioCtx.currentTime + 0.7);
+    } catch(e) {
+        console.error(e);
+    }
+}
+
+function updatePanoramicDOM() {
+    const pin = document.getElementById("qibla-pin");
+    const ticks = document.getElementById("horizon-ticks");
+    const hudTarget = document.getElementById("hud-target");
+    const viewfinder = document.getElementById("hud-viewfinder");
+    const h1 = document.getElementById("heading-h1");
+    const subP = document.getElementById("sub-p");
+    
+    const scaleFactor = 15; 
+    const centerOffset = -currentHeading * scaleFactor;
+    ticks.style.transform = `translate3d(calc(-50% + ${centerOffset}px), -100%, 0)`;
+
+    let diff = qiblaAngle - currentHeading;
+    if (diff > 180) diff -= 360;
+    if (diff < -180) diff += 360;
+
+    const viewWidth = window.innerWidth;
+    const pixelsPerDegree = viewWidth / 90; 
+    const pinOffset = diff * pixelsPerDegree;
+
+    const arrowLeft = document.getElementById("guide-left");
+    const arrowRight = document.getElementById("guide-right");
+
+    if (Math.abs(diff) <= 45) {
+        pin.style.opacity = 1;
+        pin.style.pointerEvents = "auto";
+        pin.style.transform = `translate3d(calc(-50% + ${pinOffset}px), -100%, 0)`;
+        arrowLeft.classList.remove("active");
+        arrowRight.classList.remove("active");
+    } else {
+        pin.style.opacity = 0;
+        pin.style.pointerEvents = "none";
+        if (diff > 0) {
+            arrowRight.classList.add("active");
+            arrowLeft.classList.remove("active");
+        } else {
+            arrowLeft.classList.add("active");
+            arrowRight.classList.remove("active");
+        }
+    }
+
+    const texts = langTexts[currentLanguage];
+    if (Math.abs(diff) <= 3.5) {
+        hudTarget.classList.add("aligned");
+        viewfinder.classList.add("aligned");
+        h1.innerHTML = `<span style="color:#0aff8d;">${texts.facingQibla}</span>`;
+        subP.innerHTML = texts.distanceText.replace("{dist}", Math.round(distanceToKaaba).toLocaleString());
+        
+        if (!isCameraActive) {
+            viewfinder.style.background = "radial-gradient(circle at center, #35eba2 0%, #037c52 100%)";
+        }
+
+        if (!wasAligned) {
+            playChime();
+            if (navigator.vibrate) {
+                navigator.vibrate([200, 100, 200]);
+            }
+            wasAligned = true;
+        }
+    } else {
+        hudTarget.classList.remove("aligned");
+        viewfinder.classList.remove("aligned");
+        
+        if (!isCameraActive) {
+            viewfinder.style.background = "radial-gradient(circle at center, #7bd1f9 0%, #3ca8ec 100%)";
+        }
+
+        if (diff > 0) {
+            h1.innerHTML = texts.turnRight.replace("{deg}", Math.round(Math.abs(diff)));
+        } else {
+            h1.innerHTML = texts.turnLeft.replace("{deg}", Math.round(Math.abs(diff)));
+        }
+        subP.innerHTML = texts.distanceText.replace("{dist}", Math.round(distanceToKaaba).toLocaleString());
+        wasAligned = false;
+    }
+
+    const manualSlider = document.getElementById("manual-slider");
+    if (manualSlider) {
+        manualSlider.value = Math.round(currentHeading);
+    }
+}
+
+// ONE CLICK FLOW: Triggered immediately when the user taps anywhere on the screen
+async function handleTapToStart() {
+    if (orientationInitAttempted) return;
+    orientationInitAttempted = true;
+    
+    // Fade out overlay
+    document.getElementById("tap-overlay").classList.add("hidden");
+    
+    // Request permission synchronously inside tap callback
+    await requestOrientationAccess();
+    
+    // Request Geolocation
+    requestGeolocation();
+}
+
+async function requestOrientationAccess() {
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        try {
+            const state = await DeviceOrientationEvent.requestPermission();
+            if (state === 'granted') {
+                bindCompassSensors();
+                showToast("കോമ്പസ് സജീവമായി! 🟢");
+            } else {
+                showToast("കോമ്പസ് ഓഫ്‌ലൈൻ. Manual Mode.");
+                enableManualSimulation();
+            }
+        } catch(e) {
+            console.error("iOS Permission error", e);
+            enableManualSimulation();
+        }
+    } else {
+        // Non-iOS standard flow
+        bindCompassSensors();
+    }
+}
+
+function bindCompassSensors() {
+    const handleAbsolute = (e) => {
+        if (e.alpha !== null) {
+            isAbsoluteMode = true;
+            hasSensor = true;
+            currentHeading = 360 - e.alpha; 
+            document.getElementById("manual-controls").style.display = "none";
+            document.getElementById("tap-overlay").classList.add("hidden");
+            updatePanoramicDOM();
+        }
+    };
+
+    const handleStandard = (e) => {
+        if (isAbsoluteMode) return; 
+
+        let heading = null;
+        if (e.webkitCompassHeading !== undefined) {
+            heading = e.webkitCompassHeading; 
+        } else if (e.absolute === true && e.alpha !== null) {
+            heading = 360 - e.alpha;
+        }
+
+        if (heading !== null) {
+            hasSensor = true;
+            currentHeading = heading;
+            document.getElementById("manual-controls").style.display = "none";
+            document.getElementById("tap-overlay").classList.add("hidden");
+            updatePanoramicDOM();
+        }
+    };
+
+    window.addEventListener("deviceorientationabsolute", handleAbsolute, true);
+    window.addEventListener("deviceorientation", handleStandard, true);
+
+    setTimeout(() => {
+        if (!hasSensor) {
+            enableManualSimulation();
+        }
+    }, 1500);
+}
+
+function enableManualSimulation() {
+    hasSensor = false;
+    document.getElementById("manual-controls").style.display = "block";
+    document.getElementById("tap-overlay").classList.add("hidden");
+    updatePanoramicDOM();
+}
+
+function onSliderChange(val) {
+    currentHeading = parseFloat(val);
+    updatePanoramicDOM();
+}
+
+function requestGeolocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                userLat = position.coords.latitude;
+                userLng = position.coords.longitude;
+                qiblaAngle = calculateQibla(userLat, userLng);
+                distanceToKaaba = calculateDistance(userLat, userLng, kaabaLat, kaabaLng);
+                updatePanoramicDOM();
+            },
+            function(err) {
+                console.warn(err);
+                fallbackMeccaCoordinates();
+            },
+            { enableHighAccuracy: true, timeout: 5000 }
+        );
+    } else {
+        fallbackMeccaCoordinates();
+    }
+}
+
+function fallbackMeccaCoordinates() {
+    userLat = 11.0720;
+    userLng = 76.0740;
+    qiblaAngle = calculateQibla(userLat, userLng);
+    distanceToKaaba = calculateDistance(userLat, userLng, kaabaLat, kaabaLng);
+    updatePanoramicDOM();
+}
+
+// BREATHTAKING CAMERA AR TOGGLE
+function toggleCamera() {
+    const video = document.getElementById("camera-stream");
+    const camBtn = document.getElementById("camera-toggle");
+    
+    if (isCameraActive) {
+        if (video.srcObject) {
+            video.srcObject.getTracks().forEach(track => track.stop());
+        }
+        video.style.display = "none";
+        camBtn.classList.remove("active");
+        isCameraActive = false;
+        
+        document.getElementById("hud-viewfinder").style.background = "radial-gradient(circle at center, #7bd1f9 0%, #3ca8ec 100%)";
+        showToast("ക്യാമറ ഓഫ് ചെയ്തു.");
+    } else {
+        showToast("ക്യാമറ കണക്ട് ചെയ്യുന്നു...");
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        .then(stream => {
+            video.srcObject = stream;
+            video.style.display = "block";
+            camBtn.classList.add("active");
+            isCameraActive = true;
+            
+            document.getElementById("hud-viewfinder").style.background = "transparent";
+            showToast("ക്യാമറ സജീവമായി! 📷");
+        })
+        .catch(err => {
+            console.error(err);
+            showToast("ക്യാമറ ലഭ്യമായില്ല.");
+        });
+    }
+}
+
+// Language toggle (Bilingual Malayalam & English)
+function toggleLanguage() {
+    currentLanguage = (currentLanguage === 'ml') ? 'en' : 'ml';
+    
+    const langBtn = document.getElementById("lang-btn");
+    langBtn.innerHTML = (currentLanguage === 'ml') ? 'English' : 'മലയാളം';
+    
+    const texts = langTexts[currentLanguage];
+    document.getElementById("tap-text").innerHTML = texts.tapStart;
+    document.getElementById("flat-hint-text").innerHTML = texts.holdFlat;
+    document.getElementById("manual-label").innerHTML = texts.desktopSim;
+    
+    updatePanoramicDOM();
+    showToast(currentLanguage === 'ml' ? "മലയാളം ആക്റ്റീവ്!" : "English Active!");
+}
+
+function shareWhatsApp() {
+    const text = `🕋 Madrasa Qibla Finder! Find Kaaba direction on your phone: ${window.location.href}`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`);
+}
+
+function shareFacebook() {
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`);
+}
+
+function shareTwitter() {
+    const text = `🕋 Find Kaaba direction instantly with our live Qibla compass!`;
+    window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(text)}`);
+}
+
+function copyLink() {
+    navigator.clipboard.writeText(window.location.href)
+    .then(() => showToast("വെബ്‌സൈറ്റ് ലിങ്ക് കോപ്പി ചെയ്തു! 🔗"))
+    .catch(() => showToast("ലിങ്ക് കോപ്പി ചെയ്യാൻ സാധിച്ചില്ല."));
+}
+
+// Drag horizontal panorama to rotate manually
+let isDragging = false;
+let startX = 0;
+let startHeading = 0;
+
+const view = document.getElementById("hud-viewfinder");
+view.addEventListener("mousedown", startDrag);
+view.addEventListener("touchstart", startDrag, { passive: true });
+
+function startDrag(e) {
+    if (hasSensor) return;
+    isDragging = true;
+    startX = e.touches ? e.touches[0].clientX : e.clientX;
+    startHeading = currentHeading;
+
+    document.addEventListener("mousemove", doDrag);
+    document.addEventListener("touchmove", doDrag, { passive: false });
+    document.addEventListener("mouseup", stopDrag);
+    document.addEventListener("touchend", stopDrag);
+}
+
+function doDrag(e) {
+    if (!isDragging) return;
+    if (e.cancelable) e.preventDefault();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    
+    const diffX = clientX - startX;
+    let newHeading = (startHeading - diffX / 5 + 360) % 360;
+    currentHeading = newHeading;
+    updatePanoramicDOM();
+}
+
+function stopDrag() {
+    isDragging = false;
+    document.removeEventListener("mousemove", doDrag);
+    document.removeEventListener("touchmove", doDrag);
+    document.removeEventListener("mouseup", stopDrag);
+    document.removeEventListener("touchend", stopDrag);
+}
+
+function showToast(message) {
+    let toast = document.getElementById("toast");
+    if (!toast) {
+        toast = document.createElement("div");
+        toast.id = "toast";
+        toast.className = "toast";
+        document.body.appendChild(toast);
+    }
+    toast.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${message}`;
+    toast.classList.add("active");
+    setTimeout(() => {
+        toast.classList.remove("active");
+    }, 2500);
+}
+
+// Automatic load attempt for standard browsers
+window.addEventListener("DOMContentLoaded", () => {
+    generateHorizonTicks();
+    fallbackMeccaCoordinates();
+    
+    const texts = langTexts[currentLanguage];
+    document.getElementById("tap-text").innerHTML = texts.tapStart;
+    document.getElementById("flat-hint-text").innerHTML = texts.holdFlat;
+    document.getElementById("manual-label").innerHTML = texts.desktopSim;
+
+    // Automatic silent check: if standard sensor works without clicking (e.g. Android/PC), we hide overlay automatically
+    bindCompassSensors();
+    requestGeolocation();
+    
+    setTimeout(() => {
+        if (hasSensor) {
+            document.getElementById("tap-overlay").classList.add("hidden");
+        }
+    }, 800);
+});
+
+</script>
+
+</body>
+</html>
