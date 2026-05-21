@@ -607,6 +607,14 @@
             color: #fbc02d;
         }
 
+        .c-teal {
+            border-left-color: #00897b;
+        }
+
+        .c-teal i {
+            color: #00897b;
+        }
+
         .admin-section {
             margin-top: 25px;
             padding-top: 15px;
@@ -1030,6 +1038,10 @@
 
                  <div id="btn_digital_slate" class="portal-card c-yellow" onclick="openDigitalSlate()">
                     <i class="fa fa-chalkboard"></i><span>DIGITAL SLATE</span>
+                </div>
+
+                <div id="btn_qibla" class="portal-card c-teal" onclick="openQiblaFinder()">
+                    <i class="fa fa-compass"></i><span>QIBLA FINDER</span>
                 </div>
 
                 <!-- ഉസ്താദ് (Settings) - Admin only -->
@@ -1570,6 +1582,7 @@
         function openAdminSalah() { window.location.href = `admin_salah.html?id=${currentId}`; }
         function openAttendancePortal() { window.location.href = (currentRole === "admin") ? `admin_attendance.html?id=${currentId}` : `parent_attendance.html?mid=${currentId}`; }
         function openDigitalSlate() { window.location.href = `digital_slaite.html`; }
+        function openQiblaFinder() { window.location.href = `qibla_finder.html`; }
         function openUsthadPortal() {
             const id = currentId || localStorage.getItem("madrasaId");
             if (!id) return alert("മദ്റസ ID ലഭിച്ചില്ല. വീണ്ടും ലോഗിൻ ചെയ്യുക.");
@@ -1632,7 +1645,7 @@
             setLanguage(storedLanguage);
         }
 
-        const globalExports = { showPage, checkAdminPassword, previewImage, register, handleLogin, loadProfile, togglePass, renderProfile, openDashboard, openIDPortal, openQuizPortal, openPaymentPortal, openSalahTracker, openAdminSalah, openAttendancePortal, openUsthadPortal, openDigitalSlate, logout, toggleSidebar, sidebarLogout };
+        const globalExports = { showPage, checkAdminPassword, previewImage, register, handleLogin, loadProfile, togglePass, renderProfile, openDashboard, openIDPortal, openQuizPortal, openPaymentPortal, openSalahTracker, openAdminSalah, openAttendancePortal, openUsthadPortal, openDigitalSlate, openQiblaFinder, logout, toggleSidebar, sidebarLogout };
         Object.entries(globalExports).forEach(([name, fn]) => { window[name] = fn; });
 
         let appInitialized = false;
