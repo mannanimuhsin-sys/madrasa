@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ml">
 
 <head>
@@ -1053,6 +1053,20 @@
                 <div id="btn_salah_admin" class="portal-card c-green" onclick="openAdminSalah()">
                     <i class="fa fa-star-and-crescent"></i><span>Salah Admin</span>
                 </div>
+
+                <!-- Exam -->
+                <div id="btn_exam" class="portal-card c-purple" onclick="openExam()">
+                    <i class="fa fa-book"></i><span>EXAM</span>
+                </div>
+
+                <!-- Meelaad -->
+                <div id="btn_meelaad" class="portal-card c-gold" onclick="openMeelaad()">
+                    <i class="fa fa-lantern"></i>
+                    <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+                        <span style="font-size: 14px;">MILAD PORTAL</span>
+                        <span style="font-size: 11px; opacity: 0.7;">Milad Nabi</span>
+                    </div>
+                </div>
             </div>
 
         <footer class="footer-credits">
@@ -1583,6 +1597,8 @@
         function openAttendancePortal() { window.location.href = (currentRole === "admin") ? `admin_attendance.html?id=${currentId}` : `parent_attendance.html?mid=${currentId}`; }
         function openDigitalSlate() { window.location.href = `digital_slaite.html`; }
         function openQiblaFinder() { window.location.href = `qibla_finder.html`; }
+        function openExam() { window.location.href = (currentRole === "admin") ? `admin_results.html?id=${currentId}` : `student_quiz.html?mid=${currentId}`; }
+        function openMeelaad() { alert('Meelaad Nabi coming soon!'); }
         function openUsthadPortal() {
             const id = currentId || localStorage.getItem("madrasaId");
             if (!id) return alert("മദ്റസ ID ലഭിച്ചില്ല. വീണ്ടും ലോഗിൻ ചെയ്യുക.");
@@ -1645,7 +1661,7 @@
             setLanguage(storedLanguage);
         }
 
-        const globalExports = { showPage, checkAdminPassword, previewImage, register, handleLogin, loadProfile, togglePass, renderProfile, openDashboard, openIDPortal, openQuizPortal, openPaymentPortal, openSalahTracker, openAdminSalah, openAttendancePortal, openUsthadPortal, openDigitalSlate, openQiblaFinder, logout, toggleSidebar, sidebarLogout };
+        const globalExports = { showPage, checkAdminPassword, previewImage, register, handleLogin, loadProfile, togglePass, renderProfile, openDashboard, openIDPortal, openQuizPortal, openPaymentPortal, openSalahTracker, openAdminSalah, openAttendancePortal, openUsthadPortal, openDigitalSlate, openQiblaFinder, openExam, openMeelaad, logout, toggleSidebar, sidebarLogout };
         Object.entries(globalExports).forEach(([name, fn]) => { window[name] = fn; });
 
         let appInitialized = false;
