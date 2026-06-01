@@ -33,29 +33,48 @@
         .rank { font-weight: bold; font-size: 20px; color: #d4af37; margin-top: 10px; }
         
         .btn-publish { background: #ff9800; color: white; padding: 15px 30px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        #notPublishedMsg {
+            display: none;
+            text-align: center;
+            padding: 60px 20px;
+            font-size: 20px;
+            color: #666;
+            font-weight: bold;
+        }
+        #resultsSection {
+            display: none;
+        }
     </style>
 </head>
 <body>
 
 <div class="result-container">
-    <h2>🏆 ക്വിസ് വിജയികൾ</h2>
-    <p>മൈക്രോ സെക്കന്റ് കണക്കാക്കിയുള്ള ഫലം താഴെ കാണാം</p>
-    
-    <table id="resultsTable">
-        <thead>
-            <tr>
-                <th>Rank</th>
-                <th>വിദ്യാർത്ഥി</th>
-                <th>ക്ലാസ്</th>
-                <th>സ്കോർ</th>
-                <th>സബ്മിറ്റ് സമയം</th>
-            </tr>
-        </thead>
-        <tbody id="resultBody">
-            </tbody>
-    </table>
+    <div id="notPublishedMsg">
+        <p style="font-size: 40px; margin-bottom: 20px;">📋</p>
+        <h2 style="color: #004d00; margin: 0;">Results not published</h2>
+        <p style="font-size: 14px; color: #999; margin-top: 10px;">Please wait for results to be published</p>
+    </div>
 
-    <button class="btn-publish" onclick="generatePoster()">PUBLISH WINNER POSTER</button>
+    <div id="resultsSection">
+        <h2>🏆 ക്വിസ് വിജയികൾ</h2>
+        <p>മൈക്രോ സെക്കന്റ് കണക്കാക്കിയുള്ള ഫലം താഴെ കാണാം</p>
+        
+        <table id="resultsTable">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>വിദ്യാർത്ഥി</th>
+                    <th>ക്ലാസ്</th>
+                    <th>സ്കോർ</th>
+                    <th>സബ്മിറ്റ് സമയം</th>
+                </tr>
+            </thead>
+            <tbody id="resultBody">
+                </tbody>
+        </table>
+
+        <button class="btn-publish" onclick="generatePoster()">PUBLISH WINNER POSTER</button>
+    </div>
 </div>
 
 <div id="posterArea">
@@ -115,6 +134,17 @@
     }
 
     function processAndRender(data) {
+        if (data.length === 0) {
+            // No results available
+            document.getElementById('notPublishedMsg').style.display = 'block';
+            document.getElementById('resultsSection').style.display = 'none';
+            return;
+        }
+
+        // Results are available
+        document.getElementById('notPublishedMsg').style.display = 'none';
+        document.getElementById('resultsSection').style.display = 'block';
+
         data.sort((a, b) => {
             const scoreA = a.score ?? 0;
             const scoreB = b.score ?? 0;
