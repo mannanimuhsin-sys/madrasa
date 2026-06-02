@@ -1,11 +1,17 @@
 <!DOCTYPE html>
-<html lang="ml">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ഡിജിറ്റൽ സ്ലേറ്റ്</title>
+    <title>ڈیجیٹل سلیٹ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Scheherazade+New:wght@400;700&family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        /* മൊബൈൽ സ്ക്രീൻ അനങ്ങാതിരിക്കാനും സൂം ആവാതിരിക്കാനും (Fixed UI) */
+        @font-face {
+            font-family: 'Arabic Font Fallback';
+            src: local('Amiri'), local('Scheherazade New'), local('Cairo'), local('Arial'), local('Segoe UI Historic');
+        }
+
+        /* مؤقت موبائل سکرین کے لیے (Fixed UI) */
         html, body {
             margin: 0;
             padding: 0;
@@ -15,6 +21,8 @@
             background-color: #000;
             touch-action: none;
             -webkit-text-size-adjust: none;
+            direction: rtl;
+            text-align: right;
         }
 
         * {
@@ -22,16 +30,18 @@
             user-select: none;
             -webkit-user-select: none;
             -webkit-touch-callout: none;
+            direction: rtl;
         }
 
         body {
             color: #fff;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-family: 'Amiri', 'Scheherazade New', 'Cairo', 'Arabic Font Fallback', system-ui, sans-serif;
             display: flex;
             flex-direction: column;
+            direction: rtl;
         }
 
-        /* മുകൾ ഭാഗം (Top Bar) */
+        /* مؤقت ٹاپ بار */
         .top-bar {
             background-color: #0d0d0d;
             padding: 12px 15px;
@@ -40,21 +50,26 @@
             justify-content: space-between;
             border-bottom: 1px solid #222;
             z-index: 10;
+            direction: rtl;
+            flex-direction: row-reverse;
         }
 
         .title {
             font-size: 16px;
             font-weight: bold;
             color: #e0e0e0;
+            direction: rtl;
+            font-family: 'Amiri', 'Scheherazade New', 'Cairo', sans-serif;
         }
 
         .controls {
             display: flex;
             align-items: center;
             gap: 10px;
+            flex-direction: row-reverse;
         }
 
-        /* കളർ ബട്ടണുകൾ */
+        /* کلر بٹن */
         .color-btn {
             width: 28px;
             height: 28px;
@@ -75,7 +90,7 @@
         .btn-white { background-color: #FFFFFF; }
         .btn-grey { background-color: #9E9E9E; }
 
-        /* ടൂൾ ബട്ടണുകൾ */
+        /* ٹول بٹن */
         .tool-btn {
             background-color: #222;
             color: #fff;
@@ -85,6 +100,7 @@
             cursor: pointer;
             font-size: 13px;
             font-weight: bold;
+            font-family: 'Amiri', 'Scheherazade New', 'Cairo', sans-serif;
         }
 
         .tool-btn.active {
@@ -98,7 +114,25 @@
             border-color: #b71c1c;
         }
 
-        /* സ്ലേറ്റ് ഏരിയ */
+        /* ٹی ٹی ایس بٹن */
+        .tts-btn {
+            background-color: #1c7a1c;
+            color: #fff;
+            border: 1px solid #2c9c2c;
+            padding: 6px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            font-family: 'Amiri', 'Scheherazade New', 'Cairo', sans-serif;
+        }
+
+        .tts-btn:active {
+            background-color: #135c13;
+            transform: scale(0.95);
+        }
+
+        /* سلیٹ ایریا */
         .slate-container {
             flex: 1;
             margin: 8px;
@@ -121,7 +155,7 @@
             touch-action: none;
         }
 
-        /* പശ്ചാത്തലത്തിലെ അക്ഷരം (Trace Text) */
+        /* حروف کی بیک گراؤنڈ (Trace Text) */
         .trace-text {
             position: absolute;
             top: 50%;
@@ -134,14 +168,17 @@
             pointer-events: none;
             white-space: nowrap;
             direction: rtl;
+            font-family: 'Amiri', 'Scheherazade New', 'Cairo', sans-serif;
+            text-align: center;
         }
 
-        /* കാറ്റഗറി ടാബുകൾ */
+        /* زمرہ ٹیب */
         .tabs {
             display: flex;
             justify-content: center;
             gap: 6px;
             padding: 4px 5px;
+            flex-direction: row-reverse;
         }
 
         .tab-btn {
@@ -153,6 +190,8 @@
             cursor: pointer;
             font-size: 13px;
             font-weight: 500;
+            font-family: 'Amiri', 'Scheherazade New', 'Cairo', sans-serif;
+            direction: rtl;
         }
 
         .tab-btn.active {
@@ -162,7 +201,7 @@
             font-weight: bold;
         }
 
-        /* അക്ഷരങ്ങളുടെ ലിസ്റ്റ് പാനൽ */
+        /* حروف کی فہرست پینل */
         .letter-panel {
             height: 85px;
             margin: 4px 8px 15px 8px;
@@ -175,9 +214,10 @@
             padding: 0 10px;
             gap: 10px;
             -webkit-overflow-scrolling: touch;
+            flex-direction: row-reverse;
         }
 
-        /* സ്ക്രോൾബാർ ഹൈഡ് ചെയ്യാൻ */
+        /* سکرولبار ہائیڈ کریں */
         .letter-panel::-webkit-scrollbar {
             display: none;
         }
@@ -196,20 +236,24 @@
             transition: background-color 0.1s;
         }
 
-        /* അറബി അക്ഷര രൂപം */
+        /* عربی حرف فارم */
         .letter-item .char-text {
             font-size: 24px;
             font-weight: bold;
             color: #fff;
             direction: rtl;
+            font-family: 'Amiri', 'Scheherazade New', 'Cairo', sans-serif;
+            text-align: center;
         }
 
-        /* താഴെയുള്ള മലയാളം ലേബൽ */
+        /* لیبل */
         .letter-item .sub-label {
             font-size: 11px;
             color: #8e8e93;
             margin-top: 2px;
             font-weight: normal;
+            direction: rtl;
+            font-family: system-ui, sans-serif;
         }
 
         .letter-item.active {
@@ -225,16 +269,17 @@
 <body>
 
     <div class="top-bar">
-        <div class="title">ഡിജിറ്റൽ സ്ലേറ്റ്</div>
         <div class="controls">
             <div class="color-btn btn-green" onclick="changeColor('#4CAF50', this)"></div>
             <div class="color-btn btn-red" onclick="changeColor('#F44336', this)"></div>
             <div class="color-btn btn-white active" onclick="changeColor('#FFFFFF', this)"></div>
             <div class="color-btn btn-grey" onclick="changeColor('#9E9E9E', this)"></div>
             
-            <button class="tool-btn" id="eraserBtn" onclick="toggleEraser()">Eraser</button>
-            <button class="tool-btn btn-clear" onclick="clearSlate()">Clear All</button>
+            <button class="tool-btn" id="eraserBtn" onclick="toggleEraser()">مِحَاة</button>
+            <button class="tool-btn btn-clear" onclick="clearSlate()">مَسْحُ الكُل</button>
+            <button class="tts-btn" id="speakBtn" onclick="speakCurrentLetter()">🔊 النطق</button>
         </div>
+        <div class="title">ڈیجیٹل سلیٹ</div>
     </div>
 
     <div class="slate-container" id="slateContainer">
@@ -243,22 +288,55 @@
     </div>
 
     <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('arabic', this)">അറബി</button>
-        <button class="tab-btn" onclick="switchTab('arabimalayalam', this)">അറബി-മലയാളം ലിപി</button>
-        <button class="tab-btn" onclick="switchTab('words', this)">പദങ്ങൾ</button>
+        <button class="tab-btn active" onclick="switchTab('arabic', this)">عربی</button>
+        <button class="tab-btn" onclick="switchTab('arabimalayalam', this)">عربی-مَلايالام</button>
+        <button class="tab-btn" onclick="switchTab('words', this)">كلمات</button>
     </div>
 
     <div class="letter-panel" id="letterPanel"></div>
 
     <script>
+        // عربی حروف کے نام
+        const arabicLetterNames = {
+            "أ": "الف",
+            "ب": "بائے",
+            "ت": "تائے",
+            "ث": "ثاء",
+            "ج": "جیم",
+            "ح": "حائے",
+            "خ": "خائے",
+            "د": "دال",
+            "ذ": "ذال",
+            "ر": "رائے",
+            "ز": "زائے",
+            "س": "سین",
+            "ش": "شین",
+            "ص": "صاد",
+            "ض": "ضاد",
+            "ط": "طائے",
+            "ظ": "ظائے",
+            "ع": "عین",
+            "غ": "غین",
+            "ف": "فائے",
+            "ق": "قاف",
+            "ك": "کاف",
+            "ل": "لام",
+            "م": "میم",
+            "ن": "نون",
+            "هـ": "ہائے",
+            "و": "واو",
+            "ي": "یائے"
+        };
+
         const canvas = document.getElementById('slateCanvas');
         const ctx = canvas.getContext('2d');
         const container = document.getElementById('slateContainer');
         const traceDisplay = document.getElementById('traceText');
         const letterPanel = document.getElementById('letterPanel');
         const eraserBtn = document.getElementById('eraserBtn');
+        const speakBtn = document.getElementById('speakBtn');
 
-        // നിങ്ങളുടെ പുസ്തകത്തിലെ ചിത്രങ്ങൾ പ്രകാരമുള്ള കൃത്യമായ ഡാറ്റാബേസ്
+        // دیتا بیس - درست عربی حروف
         const data = {
             arabic: [
                 {char: "أ", label: ""}, {char: "ب", label: ""}, {char: "ت", label: ""}, {char: "ث", label: ""}, 
@@ -269,21 +347,20 @@
                 {char: "ق", label: ""}, {char: "ك", label: ""}, {char: "ل", label: ""}, {char: "م", label: ""}, 
                 {char: "ن", label: ""}, {char: "هـ", label: ""}, {char: "و", label: ""}, {char: "ي", label: ""}
             ],
-            // നിങ്ങൾ നൽകിയ ചിത്രത്തിൽ (മെല്ലെഴുത്തുകൾ / Consonants) ഉള്ള അതേ അറബി-മലയാളം ലിപികൾ
             arabimalayalam: [
                 {char: "ضۡ", label: "ള്‍"}, 
                 {char: "ثٜ", label: "ഴ്‍"}, 
                 {char: "رۡ", label: "റ്‍"}, 
                 {char: "ڔّ", label: "റ്റ"}, 
                 {char: "شۡ", label: "ശ്"}, 
-                {char: "ثّۡ", label: "ഷ്"}, 
+                {char: "ثّۡ", label: "ഷ്"}, 
                 {char: "سۡ", label: "സ്"}, 
                 {char: "هـۡ", label: "ഹ്"},
                 {char: "كۡ", label: "ക്"},
                 {char: "كھۡ", label: "ഖ്"},
                 {char: "ڴۡ", label: "ഗ്"},
                 {char: "ڴھۡ", label: "ഘ്"},
-                {char: "غُۡ", label: "ങ്"},
+                {char: "غُۡ", label: "ങ്"},
                 {char: "چۡ", label: "ച്"},
                 {char: "چھۡ", label: "ഛ്"},
                 {char: "جۡ", label: "ജ്"},
@@ -296,9 +373,9 @@
                 {char: "൲", label: "മ്"}
             ],
             words: [
-                {char: "بَيْتٌ", label: "വീട്"}, {char: "قَلَمٌ", label: "പേന"}, 
-                {char: "كِتَابٌ", label: "പുസ്തകം"}, {char: "مَدْرَسَةٌ", label: "മദ്രസ"}, 
-                {char: "أُمِّي", label: "ഉമ്മ"}, {char: "أَبِي", label: "ഉപ്പ"}
+                {char: "بَيْتٌ", label: "گھر"}, {char: "قَلَمٌ", label: "قلم"}, 
+                {char: "كِتَابٌ", label: "کتاب"}, {char: "مَدْرَسَةٌ", label: "مدرسہ"}, 
+                {char: "أُمِّي", label: "ماں"}, {char: "أَبِي", label: "باپ"}
             ]
         };
 
@@ -306,8 +383,30 @@
         let currentColor = '#FFFFFF';
         let isEraser = false;
         let strokeWidth = 5;
+        let currentChar = null;
 
-        // കാൻവാസ് വലിപ്പം സ്ക്രീനിന് കൃത്യമാക്കുക
+        // ٹی ٹی ایس فنکشن - عربی میں حرف کا تلفظ
+        function speakCurrentLetter() {
+            if (!currentChar) {
+                alert('براہ کرم پہلے ایک حرف منتخب کریں');
+                return;
+            }
+
+            // عربی کا نام حاصل کریں
+            let letterName = arabicLetterNames[currentChar] || currentChar;
+            
+            // ٹی ٹی ایس استعمال کریں
+            const utterance = new SpeechSynthesisUtterance(letterName);
+            utterance.lang = 'ar-SA'; // عربی زبان
+            utterance.rate = 0.8; // سست رفتار سے بہتر سماعت
+            utterance.pitch = 1.0;
+            utterance.volume = 1.0;
+            
+            window.speechSynthesis.cancel(); // پچھلی بات کو منسوخ کریں
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // کینوس کو سائز کریں
         function resizeCanvas() {
             canvas.width = container.clientWidth;
             canvas.height = container.clientHeight;
@@ -318,7 +417,7 @@
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
-        // ഡ്രോയിങ് ലോജിക്കുകൾ
+        // ڈرائنگ فنکشنز
         function startDrawing(e) {
             drawing = true;
             ctx.beginPath();
@@ -332,7 +431,7 @@
             ctx.lineWidth = isEraser ? 35 : strokeWidth;
             
             if (isEraser) {
-                ctx.globalCompositeOperation = 'destination-out'; // വാട്ടർമാർക്ക് മായാതെ എഴുതിയത് മാത്രം മായ്ക്കും
+                ctx.globalCompositeOperation = 'destination-out';
             } else {
                 ctx.globalCompositeOperation = 'source-over';
                 ctx.strokeStyle = currentColor;
@@ -356,7 +455,7 @@
             };
         }
 
-        // ഇവന്റുകൾ ഫിക്സഡ് ആക്കുക (സ്ക്രീൻ അനങ്ങാതിരിക്കാൻ)
+        // ڈرائنگ ایونٹس
         canvas.addEventListener('mousedown', startDrawing);
         canvas.addEventListener('mousemove', draw);
         canvas.addEventListener('mouseup', stopDrawing);
@@ -366,7 +465,7 @@
         canvas.addEventListener('touchmove', (e) => { draw(e); }, { passive: true });
         canvas.addEventListener('touchend', stopDrawing, { passive: true });
 
-        // കളർ മാറ്റാൻ
+        // رنگ بدلیں
         function changeColor(color, element) {
             currentColor = color;
             isEraser = false;
@@ -376,7 +475,7 @@
             element.classList.add('active');
         }
 
-        // ഇറേസർ ടോഗിൾ
+        // ٹوگل ایریزر
         function toggleEraser() {
             isEraser = !isEraser;
             if (isEraser) {
@@ -386,32 +485,34 @@
             }
         }
 
-        // സ്ലേറ്റ് പൂർണ്ണമായി ക്ലിയർ ചെയ്യാൻ
+        // صاف کریں
         function clearSlate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
-        // ടാബ് മാറ്റാൻ
+        // ٹیب تبدیل کریں
         function switchTab(tabKey, element) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             element.classList.add('active');
             loadLetters(tabKey);
         }
 
-        // ലിസ്റ്റിൽ അക്ഷരങ്ങൾ ലോഡ് ചെയ്യാൻ
+        // حروف لوڈ کریں
         function loadLetters(tabKey) {
             letterPanel.innerHTML = '';
             data[tabKey].forEach(itemData => {
                 const item = document.createElement('div');
                 item.className = 'letter-item';
                 
-                // അക്ഷര രൂപം
+                // حرف
                 const charSpan = document.createElement('span');
                 charSpan.className = 'char-text';
                 charSpan.textContent = itemData.char;
+                charSpan.style.direction = 'rtl';
+                charSpan.style.fontFamily = "'Amiri', 'Scheherazade New', 'Cairo', sans-serif";
                 item.appendChild(charSpan);
                 
-                // മലയാളം ലേബൽ
+                // لیبل
                 if (itemData.label) {
                     const labelSpan = document.createElement('span');
                     labelSpan.className = 'sub-label';
@@ -423,9 +524,9 @@
                     document.querySelectorAll('.letter-item').forEach(i => i.classList.remove('active'));
                     item.classList.add('active');
                     
+                    currentChar = itemData.char;
                     traceDisplay.textContent = itemData.char;
                     
-                    // വലിപ്പം ക്രമീകരിക്കൽ
                     if (itemData.char.length > 3) {
                         traceDisplay.style.fontSize = '80px';
                     } else {
@@ -438,7 +539,7 @@
             });
         }
 
-        // ആദ്യം ഓപ്പൺ ചെയ്യുമ്പോൾ ഡിഫോൾട്ടായി അറബി ലോഡ് ചെയ്യുക
+        // ابتدائی حروف لوڈ کریں
         loadLetters('arabic');
     </script>
 </body>
