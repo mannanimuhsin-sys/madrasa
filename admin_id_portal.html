@@ -178,9 +178,9 @@
         <label>Date of Birth</label>
         <input type="date" id="editDOB">
 
-        <label>Password (Hash)</label>
-        <input type="text" id="editPass" placeholder="Enter new password to change">
-        <small style="color: grey; font-size: 10px;">പുതിയ പാസ്‌വേഡ് നൽകിയാൽ മാത്രം മാറ്റം വരും.</small>
+        <label>Password</label>
+        <input type="text" id="editPass" placeholder="പാസ്‌വേഡ്">
+        <small style="color: grey; font-size: 10px;">വിദ്യാർത്ഥിയുടെ പാസ്‌വേഡ് (മാറ്റണമെങ്കിൽ പുതിയത് നൽകുക).</small>
 
         <label>Status</label>
         <select id="editStatus">
@@ -346,8 +346,8 @@ function renderStudents(students) {
         if(s.gender === 'Female') stats.female++;
 
         const displayRegNo = s.regno || s.number;
-        // പാസ്‌വേഡ് കാണിക്കുന്നു (ചുരുക്കരൂപത്തിൽ)
-        const passDisplay = s.password ? s.password.substring(0, 8) + "..." : "N/A";
+        // പാസ്‌വേഡ് കാണിക്കുന്നു
+        const passDisplay = s.password ? (s.password.length > 20 ? "Hashed (Edit to change)" : s.password) : "N/A";
 
         const statusText = s.status === 'admin_edited' ? 'Admin Edited' : 
                           s.status === 'parent_approved' ? 'Parent Approved' : 
@@ -365,7 +365,6 @@ function renderStudents(students) {
                 <td>
                     <div class="action-btns">
                         ${s.status === 'pending' ? `<button class="btn-small btn-approve" onclick="quickApprove('${displayRegNo}')">Approve</button>` : ''}
-                        ${s.status === 'parent_approved' ? `<button class="btn-small btn-approve" style="background:#6f42c1" onclick="finalizeUpdate('${displayRegNo}')">Set Final</button>` : ''}
                         <button class="btn-small btn-edit" onclick="openEdit(${JSON.stringify(s).replace(/"/g, '&quot;')})"><i class="fa fa-edit"></i></button>
                         <button class="btn-small btn-delete" onclick="deleteStudent('${displayRegNo}')"><i class="fa fa-trash"></i></button>
                     </div>
@@ -429,24 +428,18 @@ async function updateStudent() {
     btn.innerText = "Updating...";
 
     const updateObj = {
-        status: "admin_edited",
-        pending_updates: {
-            regno: newRegno,
-            number: newRegno,
-            name: document.getElementById('editName').value,
-            class: document.getElementById('editClass').value,
-            division: document.getElementById('editDivision').value,
-            phone: document.getElementById('editPhone').value,
-            gender: document.getElementById('editGender').value,
-            blood: document.getElementById('editBlood').value,
-            dob: document.getElementById('editDOB').value,
-        }
+        regno: newRegno,
+        number: newRegno,
+        name: document.getElementById('editName').value,
+        class: document.getElementById('editClass').value,
+        division: document.getElementById('editDivision').value,
+        phone: document.getElementById('editPhone').value,
+        gender: document.getElementById('editGender').value,
+        blood: document.getElementById('editBlood').value,
+        dob: document.getElementById('editDOB').value,
+        password: document.getElementById('editPass').value,
+        status: document.getElementById('editStatus').value
     };
-
-    const passInput = document.getElementById('editPass').value;
-    if (passInput && passInput.length < 50) { 
-        updateObj.pending_updates.password = await hashPassword(passInput);
-    }
 
     try {
         if (newPhotoData) {
@@ -455,12 +448,30 @@ async function updateStudent() {
             formData.append("image", newPhotoData.split(',')[1]);
             const res = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, { method: "POST", body: formData });
             const json = await res.json();
-            if (json.success) updateObj.pending_updates.photo = json.data.url;
+            if (json.success) updateObj.photo = json.data.url;
         }
 
-        await db.collection("students").doc(oldDocId).update(updateObj);
+        // Fetch existing data to preserve other fields
+        const oldSnap = await db.collection("students").doc(oldDocId).get();
+        let existingData = {};
+        if (oldSnap.exists) existingData = oldSnap.data();
+        
+        // Remove pending_updates if it exists, since we are overriding it completely.
+        delete existingData.pending_updates;
+        
+        const finalData = { ...existingData, ...updateObj };
 
-        alert("എഡിറ്റ് ചെയ്ത വിവരങ്ങൾ രക്ഷിതാവിന്റെ അപ്രൂവലിനായി അയച്ചു!");
+        if (oldRegno !== newRegno) {
+            await db.collection("students").doc(newDocId).set(finalData);
+            await db.collection("students").doc(oldDocId).delete();
+        } else {
+            await db.collection("students").doc(oldDocId).update({
+                ...updateObj,
+                pending_updates: firebase.firestore.FieldValue.delete()
+            });
+        }
+
+        alert("വിവരങ്ങൾ വിജയകരമായി അപ്ഡേറ്റ് ചെയ്തു!");
         document.getElementById('editModal').style.display = 'none';
         loadStudents();
     } catch (e) {

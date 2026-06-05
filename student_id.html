@@ -301,7 +301,7 @@
                     gender: vals.gender,
                     blood: vals.blood,
                     dob: vals.dob,
-                    password: await hashPassword(vals.pass),
+                    password: vals.pass,
                     photo: imgJson.data.url,
                     status: "pending",
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
@@ -333,7 +333,7 @@
 
                 if (doc.exists) {
                     const s = doc.data();
-                    if (s.password === hPass) {
+                    if (s.password === hPass || s.password === lPass) {
                         if (s.status === "approved" || s.status === "admin_edited" || s.status === "parent_approved") { 
                             renderID(s); 
                         } else { 

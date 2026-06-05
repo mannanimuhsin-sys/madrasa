@@ -135,6 +135,14 @@
         <button class="btn btn-primary" onclick="loadStudents()">ലോഡ് ചെയ്യുക</button>
         <button class="btn btn-success" id="saveBtn" onclick="saveAttendance()" style="display: none;">സേവ് ചെയ്യുക</button>
     </div>
+
+    <!-- Submitted History Section -->
+    <div class="student-list" id="submittedHistorySection" style="margin-top: 30px;">
+        <div class="student-header">മുമ്പ് ചേർത്ത ഹാജർ വിവരങ്ങൾ</div>
+        <div id="submittedHistoryList" style="padding: 15px;">
+            <div class="no-data" style="text-align:center; padding: 20px; color:#666;">ലോഡ് ചെയ്യുന്നു...</div>
+        </div>
+    </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -185,6 +193,9 @@ window.onload = async () => {
     // Set current month
     const now = new Date();
     document.getElementById('monthSelect').value = now.getMonth() + 1;
+
+    // Load previously submitted history
+    loadSubmittedHistory();
 };
 
 async function loadStudents() {
@@ -362,10 +373,103 @@ async function saveAttendance() {
         }
 
         alert("ഹാജർ വിവരങ്ങൾ സേവ് ചെയ്തു!");
+        loadSubmittedHistory();
         
     } catch(error) {
         console.error("Error saving attendance:", error);
         alert("സേവ് ചെയ്യുന്നതിൽ പിശക്!");
+    }
+}
+
+async function loadSubmittedHistory() {
+    if(!madrasaId) return;
+    try {
+        const snap = await db.collection('attendance').where('madrasa_id', '==', madrasaId).get();
+        const docs = [];
+        snap.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
+        
+        docs.sort((a, b) => {
+            if(a.year !== b.year) return b.year - a.year;
+            if(a.month !== b.month) return b.month - a.month;
+            return String(a.class).localeCompare(String(b.class));
+        });
+        
+        const list = document.getElementById('submittedHistoryList');
+        if(docs.length === 0) {
+            list.innerHTML = '<div class="no-data" style="text-align:center; padding: 20px; color:#666;">വിവരങ്ങൾ ലഭ്യമല്ല</div>';
+            return;
+        }
+        
+        const monthNames = [
+            'ജനുവരി', 'ഫെബ്രുവരി', 'മാർച്ച്', 'ഏപ്രിൽ', 'മേയ്', 'ജൂൺ',
+            'ജൂലൈ', 'ആഗസ്റ്റ്', 'സെപ്റ്റംബർ', 'ഒക്ടോബർ', 'നവംബർ', 'ഡിസംബർ'
+        ];
+        
+        let html = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;">';
+        docs.forEach(doc => {
+            const divName = (doc.division && doc.division !== "None" && doc.division !== "undefined") ? doc.division : "All";
+            html += `
+                <div style="background: #f8f9fa; border: 1px solid #ddd; border-radius: 10px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <div style="font-weight: bold; color: var(--primary); font-size: 16px; margin-bottom: 10px;">${monthNames[doc.month - 1]} ${doc.year}</div>
+                    <div style="font-size: 14px; color: #555; margin-bottom: 5px;"><strong>ക്ലാസ്:</strong> ${doc.class} (Div: ${divName})</div>
+                    <div style="font-size: 14px; color: #555; margin-bottom: 10px;"><strong>മൊത്തം ദിവസം:</strong> ${doc.total_days}</div>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button class="btn btn-primary" style="flex: 1; padding: 8px; font-size: 14px; margin: 0;" onclick="editAttendance('${doc.year}', '${doc.month}', '${doc.class}', '${doc.division}')">Edit</button>
+                        <button class="btn" style="flex: 1; padding: 8px; font-size: 14px; margin: 0; background: #dc3545; color: white;" onclick="deleteAttendance('${doc.id}', '${doc.year}', '${doc.month}', '${doc.class}', '${doc.division}')">Delete</button>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        list.innerHTML = html;
+        
+    } catch(error) {
+        console.error("Error loading history:", error);
+        document.getElementById('submittedHistoryList').innerHTML = '<div class="no-data" style="text-align:center; padding: 20px; color:red;">വിവരങ്ങൾ ലോഡ് ചെയ്യുന്നതിൽ പിശക്</div>';
+    }
+}
+
+function editAttendance(year, month, classNum, division) {
+    document.getElementById('yearSelect').value = year;
+    document.getElementById('monthSelect').value = month;
+    document.getElementById('classSelect').value = classNum;
+    if(division && division !== 'undefined' && division !== 'null') {
+        document.getElementById('divisionSelect').value = division;
+    } else {
+        document.getElementById('divisionSelect').value = "";
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    loadStudents();
+}
+
+async function deleteAttendance(docId, year, month, classNum, division) {
+    if(!confirm("ഈ ഹാജർ വിവരങ്ങൾ ഡിലീറ്റ് ചെയ്യണമെന്ന് ഉറപ്പാണോ?")) return;
+    
+    try {
+        await db.collection('attendance').doc(docId).delete();
+        
+        // Supabase deletion if connected
+        try {
+            if(window.supabaseClient) {
+                let query = window.supabaseClient.from('attendance')
+                    .delete()
+                    .match({ madrasa_id: madrasaId, year: parseInt(year), month: parseInt(month), class: classNum });
+                
+                if (division && division !== 'undefined' && division !== 'null') {
+                    query = query.match({ division: division });
+                }
+                
+                await query;
+            }
+        } catch (supErr) {
+            console.error("Supabase delete err:", supErr);
+        }
+        
+        alert("വിവരങ്ങൾ ഡിലീറ്റ് ചെയ്തു!");
+        loadSubmittedHistory();
+    } catch(error) {
+        console.error("Error deleting:", error);
+        alert("ഡിലീറ്റ് ചെയ്യുന്നതിൽ പിശക്!");
     }
 }
 
