@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>HAJAR പോർട്ടൽ | Admin Panel</title>
     
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <!-- ✅ കറക്റ്റ് അപ്ഡേഷൻ ലഭിക്കാൻ താഴെ ഉള്ളത് സഹായിക്കും -->
@@ -14,23 +13,23 @@
     <meta http-equiv="Expires" content="0">
     
     <style>
-        :root { --primary: #004d00; --gold: #d4af37; --bg: #f4f7f6; }
+        :root { --primary: #004d00; --gold: #d4af37; --bg: #f4f7f6; --danger: #dc3545; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 15px; touch-action: manipulation; -webkit-text-size-adjust: 100%; }
         .container { max-width: 800px; margin: auto; background: white; border-radius: 15px; padding: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
         
-        .header { text-align: center; background: linear-gradient(135deg, var(--primary), #002b00); color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; }
+        .header { text-align: center; background: linear-gradient(135deg, var(--primary), #002b00); color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; position: relative; }
         
         .controls { background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
         .control-row { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
         .control-group { flex: 1; min-width: 200px; }
         label { display: block; font-weight: bold; color: var(--primary); margin-bottom: 5px; }
-        select, input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
+        select, input[type="number"], input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 15px; }
         
         .total-attendance { background: #e8f5e8; padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid var(--primary); }
         .total-input { font-size: 18px; font-weight: bold; text-align: center; }
         
         .student-list { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .student-header { background: var(--primary); color: white; padding: 15px; font-weight: bold; }
+        .student-header { background: var(--primary); color: white; padding: 15px; font-weight: bold; font-size: 16px; }
         .student-item { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #eee; }
         .student-item:last-child { border-bottom: none; }
         .student-info { flex: 1; }
@@ -38,17 +37,131 @@
         .student-class { color: #666; font-size: 14px; }
         .attendance-input { width: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 5px; text-align: center; }
         
-        .btn { padding: 12px 25px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin: 5px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin: 4px; font-size: 14px; transition: opacity 0.2s; }
+        .btn:active { opacity: 0.75; }
         .btn-primary { background: var(--primary); color: white; }
         .btn-success { background: #28a745; color: white; }
         .btn-secondary { background: #6c757d; color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-sm { padding: 6px 14px; font-size: 13px; }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        
         .summary-card { background: #eaf4ea; border: 1px solid #d4e8d4; border-radius: 12px; padding: 15px; margin-bottom: 10px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
         .summary-item { text-align: center; }
         .summary-value { font-size: 18px; font-weight: bold; color: var(--primary); }
         .summary-label { font-size: 12px; color: #555; margin-top: 4px; }
-        .btn:disabled { background: #ccc; cursor: not-allowed; }
         
         .actions { text-align: center; margin-top: 20px; }
+
+        /* ── History Filter Section ── */
+        .history-filter-box {
+            background: #f0f8f0;
+            border: 1px solid #c3dfc3;
+            border-radius: 12px;
+            padding: 18px;
+            margin-top: 30px;
+        }
+        .history-filter-box h3 {
+            margin: 0 0 14px 0;
+            color: var(--primary);
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .filter-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 14px; }
+        .filter-group { flex: 1; min-width: 140px; }
+        .filter-group label { font-size: 13px; margin-bottom: 4px; }
+        .filter-group select { padding: 8px; font-size: 14px; }
+
+        /* ── History Cards ── */
+        .history-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 14px;
+            margin-top: 12px;
+        }
+        .history-card {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        }
+        .history-card-title {
+            font-weight: bold;
+            color: var(--primary);
+            font-size: 15px;
+            margin-bottom: 6px;
+        }
+        .history-card-info { font-size: 13px; color: #555; margin-bottom: 3px; }
+        .history-card-actions { display: flex; gap: 8px; margin-top: 12px; }
+        .history-card-actions .btn { flex: 1; padding: 8px; margin: 0; text-align: center; }
+
+        /* ── Student Search Section ── */
+        .student-search-box {
+            background: #fff8e1;
+            border: 1px solid #ffe082;
+            border-radius: 12px;
+            padding: 18px;
+            margin-top: 24px;
+        }
+        .student-search-box h3 {
+            margin: 0 0 14px 0;
+            color: #7a5800;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .search-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+        .search-row .filter-group { min-width: 180px; }
+        .search-row .filter-group label { color: #7a5800; }
+        .search-row input { padding: 10px; border: 1px solid #ffe082; border-radius: 8px; font-size: 15px; }
+
+        /* ── Student Attendance Result Card ── */
+        .student-result-card {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .student-result-card .student-meta { margin-bottom: 10px; }
+        .student-result-card .student-meta .name { font-size: 17px; font-weight: bold; color: var(--primary); }
+        .student-result-card .student-meta .sub { font-size: 13px; color: #666; }
+
+        .month-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .month-row:last-child { border-bottom: none; }
+        .month-row .month-label { font-weight: bold; color: #333; font-size: 14px; min-width: 120px; }
+        .month-row .month-days { font-size: 13px; color: #555; flex: 1; }
+        .month-row .month-pct {
+            font-weight: bold;
+            font-size: 14px;
+            color: var(--primary);
+        }
+        .month-row .month-actions { display: flex; gap: 6px; }
+        .month-row .month-actions .btn { padding: 5px 10px; font-size: 12px; margin: 0; }
+
+        .no-data { text-align: center; padding: 20px; color: #888; font-style: italic; }
+
+        /* attendance-item styles used in history view */
+        .attendance-item { padding: 12px; border-bottom: 1px solid #eee; }
+        .month-header { font-weight: bold; color: var(--primary); font-size: 15px; margin-bottom: 8px; }
+        .attendance-stats { display: flex; gap: 20px; }
+        .stat { text-align: center; }
+        .stat-value { font-size: 18px; font-weight: bold; color: #333; }
+        .stat-label { font-size: 11px; color: #777; margin-top: 2px; }
+        .percentage { font-size: 18px; font-weight: bold; color: var(--primary); }
     </style>
 </head>
 <body>
@@ -62,6 +175,7 @@
         <p id="madrasaInfo">അഡ്മിൻ പാനൽ</p>
     </div>
     
+    <!-- ── New Attendance Entry ── -->
     <div class="controls">
         <div class="control-row">
             <div class="control-group">
@@ -136,13 +250,75 @@
         <button class="btn btn-success" id="saveBtn" onclick="saveAttendance()" style="display: none;">സേവ് ചെയ്യുക</button>
     </div>
 
-    <!-- Submitted History Section -->
-    <div class="student-list" id="submittedHistorySection" style="margin-top: 30px;">
-        <div class="student-header">മുമ്പ് ചേർത്ത ഹാജർ വിവരങ്ങൾ</div>
-        <div id="submittedHistoryList" style="padding: 15px;">
-            <div class="no-data" style="text-align:center; padding: 20px; color:#666;">ലോഡ് ചെയ്യുന്നു...</div>
+    <!-- ══════════════════════════════════════════
+         മുമ്പ് ചേർത്ത ഹാജർ വിവരങ്ങൾ – Filtered
+    ══════════════════════════════════════════ -->
+    <div class="history-filter-box" id="submittedHistorySection">
+        <h3><i class="fa fa-history"></i> മുമ്പ് ചേർത്ത ഹാജർ വിവരങ്ങൾ</h3>
+
+        <!-- Filter controls -->
+        <div class="filter-row">
+            <div class="filter-group">
+                <label>വർഷം തെരഞ്ഞെടുക്കുക</label>
+                <select id="histYearSelect" onchange="onHistFilterChange()">
+                    <option value="">-- വർഷം --</option>
+                    <script>
+                        for(let y2 = currentYear - 2; y2 <= currentYear + 2; y2++) {
+                            document.write(`<option value="${y2}" ${y2 === currentYear ? 'selected' : ''}>${y2}</option>`);
+                        }
+                    </script>
+                </select>
+            </div>
+            <div class="filter-group" id="histMonthGroup" style="display:none;">
+                <label>മാസം തെരഞ്ഞെടുക്കുക</label>
+                <select id="histMonthSelect" onchange="onHistFilterChange()">
+                    <option value="">-- മാസം --</option>
+                    <option value="1">ജനുവരി</option>
+                    <option value="2">ഫെബ്രുവരി</option>
+                    <option value="3">മാർച്ച്</option>
+                    <option value="4">ഏപ്രിൽ</option>
+                    <option value="5">മേയ്</option>
+                    <option value="6">ജൂൺ</option>
+                    <option value="7">ജൂലൈ</option>
+                    <option value="8">ആഗസ്റ്റ്</option>
+                    <option value="9">സെപ്റ്റംബർ</option>
+                    <option value="10">ഒക്ടോബർ</option>
+                    <option value="11">നവംബർ</option>
+                    <option value="12">ഡിസംബർ</option>
+                </select>
+            </div>
+            <div class="filter-group" id="histClassGroup" style="display:none;">
+                <label>ക്ലാസ് തെരഞ്ഞെടുക്കുക</label>
+                <select id="histClassSelect" onchange="onHistFilterChange()">
+                    <option value="">-- ക്ലാസ് --</option>
+                    <script>for(let i2=1; i2<=12; i2++) document.write(`<option value="${i2}">${i2}</option>`);</script>
+                </select>
+            </div>
+        </div>
+
+        <!-- Results appear here after all 3 are selected -->
+        <div id="historyCardsArea">
+            <div class="no-data">വർഷം, മാസം, ക്ലാസ് തെരഞ്ഞെടുത്ത ശേഷം ഹാജർ വിവരങ്ങൾ ഇവിടെ കാണും.</div>
         </div>
     </div>
+
+    <!-- ══════════════════════════════════════════
+         വിദ്യാർത്ഥി രജിസ്റ്റർ നമ്പർ പരതൽ
+    ══════════════════════════════════════════ -->
+    <div class="student-search-box" id="studentSearchSection">
+        <h3><i class="fa fa-search"></i> വിദ്യാർത്ഥിയുടെ ഹാജർ പരതൽ</h3>
+        <div class="search-row">
+            <div class="filter-group" style="flex:2; min-width:200px;">
+                <label>രജിസ്റ്റർ നമ്പർ / ID നൽകുക</label>
+                <input type="text" id="studentRegInput" placeholder="ഉദാ: 001, STU123 ..." oninput="onStudentRegInput()" />
+            </div>
+            <div style="padding-bottom:2px;">
+                <button class="btn btn-primary" onclick="searchStudentByReg()"><i class="fa fa-search"></i> തിരയുക</button>
+            </div>
+        </div>
+        <div id="studentSearchResult" style="margin-top:14px;"></div>
+    </div>
+
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -171,18 +347,24 @@ const madrasaId = urlParams.get('id');
 let currentStudents = [];
 let attendanceData = {};
 
+const monthNames = [
+    'ജനുവരി', 'ഫെബ്രുവരി', 'മാർച്ച്', 'ഏപ്രിൽ', 'മേയ്', 'ജൂൺ',
+    'ജൂലൈ', 'ആഗസ്റ്റ്', 'സെപ്റ്റംബർ', 'ഒക്ടോബർ', 'നവംബർ', 'ഡിസംബർ'
+];
+
+// All attendance docs cached after first load
+let allAttendanceDocs = [];
+
 window.onload = async () => {
     if(!madrasaId) {
         alert("മദ്റസ ഐഡി കണ്ടെത്തിയില്ല!");
         return;
     }
     
-    // ✅ ലോഡ് മദ്റസ ഇൻഫോ (ഫയർസ്റ്റോറിൽ നിന്ന്)
     const doc = await db.collection('madrasa_requests').doc(madrasaId).get();
     if(doc.exists) {
         document.getElementById('madrasaInfo').innerText = doc.data().name + ' - ' + doc.data().place;
     } else {
-        // ബാക്ക്-അപ്പ് RTDB
         rtdb.ref('madrasa_requests/' + madrasaId).once('value', snap => {
             if(snap.exists()) {
                 document.getElementById('madrasaInfo').innerText = snap.val().name + ' - ' + snap.val().place;
@@ -190,14 +372,106 @@ window.onload = async () => {
         });
     }
     
-    // Set current month
     const now = new Date();
     document.getElementById('monthSelect').value = now.getMonth() + 1;
 
-    // Load previously submitted history
-    loadSubmittedHistory();
+    // Load all attendance docs into cache
+    await loadAllAttendanceDocs();
+
+    // Auto-set history year filter to current year and trigger cascade
+    document.getElementById('histYearSelect').value = now.getFullYear();
+    onHistFilterChange();
 };
 
+/* ──────────────────────────────────────────
+   Load all attendance docs (cached)
+────────────────────────────────────────── */
+async function loadAllAttendanceDocs() {
+    if(!madrasaId) return;
+    try {
+        const snap = await db.collection('attendance').where('madrasa_id', '==', madrasaId).get();
+        allAttendanceDocs = [];
+        snap.forEach(d => allAttendanceDocs.push({ id: d.id, ...d.data() }));
+    } catch(e) {
+        console.error("Error loading attendance cache:", e);
+    }
+}
+
+/* ──────────────────────────────────────────
+   History Filter Logic (Year → Month → Class)
+────────────────────────────────────────── */
+function onHistFilterChange() {
+    const year  = document.getElementById('histYearSelect').value;
+    const month = document.getElementById('histMonthSelect').value;
+    const cls   = document.getElementById('histClassSelect').value;
+
+    // Show/hide cascading dropdowns
+    document.getElementById('histMonthGroup').style.display = year  ? 'block' : 'none';
+    document.getElementById('histClassGroup').style.display = (year && month) ? 'block' : 'none';
+
+    if(!year) {
+        document.getElementById('histMonthSelect').value = '';
+        document.getElementById('histClassSelect').value = '';
+    }
+    if(!month) {
+        document.getElementById('histClassSelect').value = '';
+    }
+
+    const area = document.getElementById('historyCardsArea');
+
+    if(!year || !month || !cls) {
+        area.innerHTML = '<div class="no-data">വർഷം, മാസം, ക്ലാസ് തെരഞ്ഞെടുത്ത ശേഷം ഹാജർ വിവരങ്ങൾ ഇവിടെ കാണും.</div>';
+        return;
+    }
+
+    // Filter from cache
+    const filtered = allAttendanceDocs.filter(d =>
+        String(d.year) === String(year) &&
+        String(d.month) === String(month) &&
+        String(d.class).trim() === String(cls).trim()
+    );
+
+    if(filtered.length === 0) {
+        area.innerHTML = `<div class="no-data">തെരഞ്ഞെടുത്ത വർഷം / മാസം / ക്ലാസിന് ഹാജർ വിവരങ്ങൾ ഒന്നും ചേർത്തിട്ടില്ല.</div>`;
+        return;
+    }
+
+    // Sort: same class, multiple divisions – show all
+    filtered.sort((a,b) => {
+        const da = a.division || '';
+        const db2 = b.division || '';
+        return da.localeCompare(db2);
+    });
+
+    let html = '<div class="history-cards-grid">';
+    filtered.forEach(doc => {
+        const divName = (doc.division && doc.division !== "None" && doc.division !== "undefined" && doc.division !== "") ? doc.division : "All";
+        html += `
+            <div class="history-card">
+                <div class="history-card-title">${monthNames[doc.month - 1]} ${doc.year}</div>
+                <div class="history-card-info"><strong>ക്ലാസ്:</strong> ${doc.class} &nbsp;|&nbsp; <strong>Div:</strong> ${divName}</div>
+                <div class="history-card-info"><strong>മൊത്തം ദിവസം:</strong> ${doc.total_days}</div>
+                <div class="history-card-info" style="color:#888; font-size:12px;">
+                    ${doc.students ? Object.keys(doc.students).length + ' വിദ്യാർത്ഥികൾ' : ''}
+                </div>
+                <div class="history-card-actions">
+                    <button class="btn btn-primary" onclick="editAttendance('${doc.year}','${doc.month}','${doc.class}','${doc.division}')">
+                        <i class="fa fa-edit"></i> Edit
+                    </button>
+                    <button class="btn btn-danger" onclick="deleteAttendance('${doc.id}','${doc.year}','${doc.month}','${doc.class}','${doc.division}')">
+                        <i class="fa fa-trash"></i> Delete
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    area.innerHTML = html;
+}
+
+/* ──────────────────────────────────────────
+   Load Students (New Attendance Entry)
+────────────────────────────────────────── */
 async function loadStudents() {
     const year = document.getElementById('yearSelect').value;
     const month = document.getElementById('monthSelect').value;
@@ -210,7 +484,6 @@ async function loadStudents() {
     }
     
     try {
-        // Load students for this madrasa
         const query = db.collection("students")
             .where("madrasa_id", "==", madrasaId)
             .where("status", "==", "approved");
@@ -220,7 +493,6 @@ async function loadStudents() {
         
         snap.forEach(doc => {
             const data = doc.data();
-            // Robust class matching (string/number and trim)
             const matchesClass = String(data.class).trim() === String(classNum).trim();
             let matchesDivision = true;
             if (division === "None") {
@@ -228,7 +500,6 @@ async function loadStudents() {
             } else if (division && data.division !== division) {
                 matchesDivision = false;
             }
-
             if (matchesClass && matchesDivision) {
                 currentStudents.push({ id: doc.id, ...data });
             }
@@ -236,7 +507,6 @@ async function loadStudents() {
         
         currentStudents.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
         
-        // Load existing attendance data
         const attendanceRef = db.collection("attendance")
             .where("madrasa_id", "==", madrasaId)
             .where("year", "==", parseInt(year))
@@ -249,18 +519,15 @@ async function loadStudents() {
         
         if(!attendanceSnap.empty) {
             attendanceSnap.forEach(doc => {
-                const data = doc.data();
-                attendanceData = data;
-                document.getElementById('totalAttendance').value = data.total_days || '';
+                attendanceData = doc.data();
+                document.getElementById('totalAttendance').value = attendanceData.total_days || '';
             });
         }
         
-        // Show sections
         document.getElementById('totalSection').style.display = 'block';
         document.getElementById('studentSection').style.display = 'block';
         document.getElementById('saveBtn').style.display = 'inline-block';
         
-        // Render student list
         renderStudentList();
         
     } catch(error) {
@@ -288,7 +555,7 @@ function renderStudentList() {
                    data-student-id="${student.id}" 
                    value="${attendance}" 
                    min="0" max="31" placeholder="ദിവസങ്ങൾ">
-            <button class="btn btn-secondary" style="margin-left:10px;" onclick="viewStudentHistory('${student.id}')">View History</button>
+            <button class="btn btn-secondary btn-sm" style="margin-left:10px;" onclick="viewStudentHistory('${student.id}')">History</button>
         `;
         list.appendChild(item);
     });
@@ -306,14 +573,11 @@ async function saveAttendance() {
         return;
     }
     
-    // Collect student attendance
     const studentAttendance = {};
     document.querySelectorAll('.attendance-input').forEach(input => {
         const studentId = input.getAttribute('data-student-id');
         const days = parseInt(input.value) || 0;
-        if(days > 0) {
-            studentAttendance[studentId] = days;
-        }
+        if(days > 0) studentAttendance[studentId] = days;
     });
     
     const attendanceRecord = {
@@ -329,7 +593,6 @@ async function saveAttendance() {
     };
     
     try {
-        // Check if record exists
         const existingQuery = db.collection("attendance")
             .where("madrasa_id", "==", madrasaId)
             .where("year", "==", year)
@@ -340,15 +603,12 @@ async function saveAttendance() {
         const existingSnap = await existingQuery.get();
         
         if(!existingSnap.empty) {
-            // Update existing
             const docId = existingSnap.docs[0].id;
             await db.collection("attendance").doc(docId).update(attendanceRecord);
         } else {
-            // Create new
             await db.collection("attendance").add(attendanceRecord);
         }
         
-        // ✅ സബ്മിഷൻ സുപാബേസിലേക്ക് സിങ്ക് ചെയ്യുന്നു
         try {
             if (window.supabaseClient) {
                 const { data, error } = await window.supabaseClient
@@ -364,16 +624,16 @@ async function saveAttendance() {
                         updated_at: new Date().toISOString(),
                         updated_by: "admin"
                     }, { onConflict: 'madrasa_id,year,month,class,division' });
-                
                 if (error) throw error;
             }
         } catch (supabaseError) {
             console.error("Supabase Save Error:", supabaseError);
-            // Non-blocking error for now
         }
 
         alert("ഹാജർ വിവരങ്ങൾ സേവ് ചെയ്തു!");
-        loadSubmittedHistory();
+        // Refresh cache and update history panel
+        await loadAllAttendanceDocs();
+        onHistFilterChange();
         
     } catch(error) {
         console.error("Error saving attendance:", error);
@@ -381,54 +641,9 @@ async function saveAttendance() {
     }
 }
 
-async function loadSubmittedHistory() {
-    if(!madrasaId) return;
-    try {
-        const snap = await db.collection('attendance').where('madrasa_id', '==', madrasaId).get();
-        const docs = [];
-        snap.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
-        
-        docs.sort((a, b) => {
-            if(a.year !== b.year) return b.year - a.year;
-            if(a.month !== b.month) return b.month - a.month;
-            return String(a.class).localeCompare(String(b.class));
-        });
-        
-        const list = document.getElementById('submittedHistoryList');
-        if(docs.length === 0) {
-            list.innerHTML = '<div class="no-data" style="text-align:center; padding: 20px; color:#666;">വിവരങ്ങൾ ലഭ്യമല്ല</div>';
-            return;
-        }
-        
-        const monthNames = [
-            'ജനുവരി', 'ഫെബ്രുവരി', 'മാർച്ച്', 'ഏപ്രിൽ', 'മേയ്', 'ജൂൺ',
-            'ജൂലൈ', 'ആഗസ്റ്റ്', 'സെപ്റ്റംബർ', 'ഒക്ടോബർ', 'നവംബർ', 'ഡിസംബർ'
-        ];
-        
-        let html = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;">';
-        docs.forEach(doc => {
-            const divName = (doc.division && doc.division !== "None" && doc.division !== "undefined") ? doc.division : "All";
-            html += `
-                <div style="background: #f8f9fa; border: 1px solid #ddd; border-radius: 10px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                    <div style="font-weight: bold; color: var(--primary); font-size: 16px; margin-bottom: 10px;">${monthNames[doc.month - 1]} ${doc.year}</div>
-                    <div style="font-size: 14px; color: #555; margin-bottom: 5px;"><strong>ക്ലാസ്:</strong> ${doc.class} (Div: ${divName})</div>
-                    <div style="font-size: 14px; color: #555; margin-bottom: 10px;"><strong>മൊത്തം ദിവസം:</strong> ${doc.total_days}</div>
-                    <div style="display: flex; gap: 10px; margin-top: 10px;">
-                        <button class="btn btn-primary" style="flex: 1; padding: 8px; font-size: 14px; margin: 0;" onclick="editAttendance('${doc.year}', '${doc.month}', '${doc.class}', '${doc.division}')">Edit</button>
-                        <button class="btn" style="flex: 1; padding: 8px; font-size: 14px; margin: 0; background: #dc3545; color: white;" onclick="deleteAttendance('${doc.id}', '${doc.year}', '${doc.month}', '${doc.class}', '${doc.division}')">Delete</button>
-                    </div>
-                </div>
-            `;
-        });
-        html += '</div>';
-        list.innerHTML = html;
-        
-    } catch(error) {
-        console.error("Error loading history:", error);
-        document.getElementById('submittedHistoryList').innerHTML = '<div class="no-data" style="text-align:center; padding: 20px; color:red;">വിവരങ്ങൾ ലോഡ് ചെയ്യുന്നതിൽ പിശക്</div>';
-    }
-}
-
+/* ──────────────────────────────────────────
+   Edit / Delete
+────────────────────────────────────────── */
 function editAttendance(year, month, classNum, division) {
     document.getElementById('yearSelect').value = year;
     document.getElementById('monthSelect').value = month;
@@ -448,17 +663,14 @@ async function deleteAttendance(docId, year, month, classNum, division) {
     try {
         await db.collection('attendance').doc(docId).delete();
         
-        // Supabase deletion if connected
         try {
             if(window.supabaseClient) {
                 let query = window.supabaseClient.from('attendance')
                     .delete()
                     .match({ madrasa_id: madrasaId, year: parseInt(year), month: parseInt(month), class: classNum });
-                
                 if (division && division !== 'undefined' && division !== 'null') {
                     query = query.match({ division: division });
                 }
-                
                 await query;
             }
         } catch (supErr) {
@@ -466,13 +678,164 @@ async function deleteAttendance(docId, year, month, classNum, division) {
         }
         
         alert("വിവരങ്ങൾ ഡിലീറ്റ് ചെയ്തു!");
-        loadSubmittedHistory();
+        await loadAllAttendanceDocs();
+        onHistFilterChange();
     } catch(error) {
         console.error("Error deleting:", error);
         alert("ഡിലീറ്റ് ചെയ്യുന്നതിൽ പിശക്!");
     }
 }
 
+/* ──────────────────────────────────────────
+   Student Register Number Search
+────────────────────────────────────────── */
+function onStudentRegInput() {
+    // Clear result when input cleared
+    const val = document.getElementById('studentRegInput').value.trim();
+    if(!val) document.getElementById('studentSearchResult').innerHTML = '';
+}
+
+async function searchStudentByReg() {
+    const regVal = document.getElementById('studentRegInput').value.trim();
+    const resultDiv = document.getElementById('studentSearchResult');
+
+    if(!regVal) {
+        resultDiv.innerHTML = '<div class="no-data">രജിസ്റ്റർ നമ്പർ നൽകുക.</div>';
+        return;
+    }
+
+    resultDiv.innerHTML = '<div class="no-data"><i class="fa fa-spinner fa-spin"></i> തിരയുന്നു...</div>';
+
+    try {
+        // Try matching regno, number, or id fields
+        const snap = await db.collection('students')
+            .where('madrasa_id', '==', madrasaId)
+            .where('status', '==', 'approved')
+            .get();
+
+        let found = null;
+        snap.forEach(d => {
+            const data = d.data();
+            const reg = String(data.regno || data.number || '').trim().toLowerCase();
+            if(reg === regVal.toLowerCase() || d.id === regVal) {
+                found = { id: d.id, ...data };
+            }
+        });
+
+        if(!found) {
+            resultDiv.innerHTML = `<div class="no-data">രജിസ്റ്റർ നമ്പർ <strong>${regVal}</strong> കൊണ്ട് ഒരു വിദ്യാർത്ഥിയെ കണ്ടെത്തിയില്ല.</div>`;
+            return;
+        }
+
+        await renderStudentAttendanceResult(found, resultDiv);
+
+    } catch(e) {
+        console.error("Student search error:", e);
+        resultDiv.innerHTML = '<div class="no-data" style="color:red;">തിരയുന്നതിൽ പിശക്!</div>';
+    }
+}
+
+async function renderStudentAttendanceResult(student, container) {
+    const studentKey = student.id;
+    const studentReg = student.regno || student.number || student.id;
+    const studentNum = student.number || student.regno || student.id;
+
+    // Get attendance docs for this student's class
+    const snap = await db.collection('attendance')
+        .where('madrasa_id', '==', madrasaId)
+        .where('class', '==', student.class)
+        .get();
+
+    const docs = [];
+    snap.forEach(d => {
+        const data = d.data();
+        const present = data.students
+            ? (data.students[studentKey] || data.students[studentReg] || data.students[studentNum] || 0)
+            : 0;
+        // Only show months where student has some record OR total_days exists
+        if(data.total_days) {
+            docs.push({ docId: d.id, present, ...data });
+        }
+    });
+
+    docs.sort((a, b) => {
+        if(a.year !== b.year) return b.year - a.year;
+        return b.month - a.month;
+    });
+
+    let totalWorkingDays = 0, totalPresentDays = 0;
+    docs.forEach(d => { totalWorkingDays += d.total_days || 0; totalPresentDays += d.present || 0; });
+    const overallPct = totalWorkingDays > 0 ? Math.round((totalPresentDays / totalWorkingDays) * 100) : 0;
+
+    let html = `
+        <div class="student-result-card">
+            <div class="student-meta">
+                <div class="name"><i class="fa fa-user-graduate"></i> ${student.name}</div>
+                <div class="sub">ക്ലാസ്: ${student.class} ${student.division ? '(' + student.division + ')' : ''} &nbsp;|&nbsp; Reg: ${studentReg}</div>
+            </div>
+            <div class="summary-card" style="margin-bottom:12px;">
+                <div class="summary-item">
+                    <div class="summary-value">${docs.length}</div>
+                    <div class="summary-label">മാസങ്ങൾ</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value">${totalWorkingDays}</div>
+                    <div class="summary-label">മൊത്തം ദിവസം</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value">${totalPresentDays}</div>
+                    <div class="summary-label">ഹാജർ</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value">${overallPct}%</div>
+                    <div class="summary-label">ശതമാനം</div>
+                </div>
+            </div>
+    `;
+
+    if(docs.length === 0) {
+        html += '<div class="no-data">ഈ വിദ്യാർത്ഥിക്ക് ഹാജർ വിവരങ്ങൾ ഒന്നും ഇല്ല.</div>';
+    } else {
+        docs.forEach(d => {
+            const divName = (d.division && d.division !== "None" && d.division !== "undefined" && d.division !== "") ? d.division : "All";
+            const pct = d.total_days > 0 ? Math.round((d.present / d.total_days) * 100) : 0;
+            const pctColor = pct >= 75 ? 'var(--primary)' : pct >= 50 ? '#e67e00' : '#dc3545';
+            html += `
+                <div class="month-row">
+                    <div class="month-label">${monthNames[d.month - 1]} ${d.year}</div>
+                    <div class="month-days">ഹാജർ: <strong>${d.present}</strong> / ${d.total_days} ദിവസം &nbsp;|&nbsp; Div: ${divName}</div>
+                    <div class="month-pct" style="color:${pctColor};">${pct}%</div>
+                    <div class="month-actions">
+                        <button class="btn btn-primary" onclick="editAttendanceAndScroll('${d.year}','${d.month}','${d.class}','${d.division}')">
+                            <i class="fa fa-edit"></i>
+                        </button>
+                        <button class="btn btn-danger" onclick="deleteAttendance('${d.docId}','${d.year}','${d.month}','${d.class}','${d.division}')">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function editAttendanceAndScroll(year, month, classNum, division) {
+    editAttendance(year, month, classNum, division);
+    // Also update history filter to reflect
+    document.getElementById('histYearSelect').value = year;
+    onHistFilterChange();
+    document.getElementById('histMonthSelect').value = month;
+    onHistFilterChange();
+    document.getElementById('histClassSelect').value = classNum;
+    onHistFilterChange();
+}
+
+/* ──────────────────────────────────────────
+   View Student History (from student list)
+────────────────────────────────────────── */
 async function viewStudentHistory(studentId) {
     const student = currentStudents.find(s => s.id === studentId);
     if(!student) return alert("വിദ്യാർത്ഥി കണ്ടെത്താനായില്ല.");
@@ -510,10 +873,6 @@ async function viewStudentHistory(studentId) {
         let totalMonths = attendanceDocs.length;
         let totalWorkingDays = 0;
         let totalPresentDays = 0;
-        const monthNames = [
-            'ജനുവരി', 'ഫെബ്രുവരി', 'മാർച്ച്', 'ഏപ്രിൽ', 'മേയ്', 'ജൂൺ',
-            'ജൂലൈ', 'ആഗസ്റ്റ്', 'സെപ്റ്റംബർ', 'ഒക്ടോബർ', 'നവംബർ', 'ഡിസംബർ'
-        ];
 
         const rows = attendanceDocs.map(data => {
             const present = data.students ? (data.students[studentKey] || data.students[studentReg] || data.students[studentNum] || 0) : 0;
@@ -562,6 +921,8 @@ async function viewStudentHistory(studentId) {
         `;
         historySummary.style.display = 'grid';
         historyList.innerHTML = rows.join('');
+
+        historySection.scrollIntoView({ behavior: 'smooth' });
     } catch(error) {
         console.error('Error loading history:', error);
         historyList.innerHTML = '<div class="no-data">റിപ്പോർട്ട് ലോഡ് ചെയ്യുന്നതിൽ പിശക്</div>';
